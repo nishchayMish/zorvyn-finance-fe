@@ -5,16 +5,41 @@ import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/FloatingInput";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api-client";
 
 export default function SignupPage() {
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        await new Promise((res) => setTimeout(res, 1200));
-        setLoading(false);
+        const payload = {
+            name: fullName,
+            email,
+            password,
+        };
+
+        try {
+            setLoading(true);
+            const res = await api.post("/users/register", payload);
+
+            if (res.status === 201) {
+                toast.success("Account created successfully!");
+                router.push("/login");
+            }
+        } catch (error: any) {
+            console.error(error);
+            const message = error.response?.data?.message || "Registration failed. Please try again.";
+            toast.error(message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -39,13 +64,27 @@ export default function SignupPage() {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    <FloatingInput label="Full Name" />
-                    <FloatingInput label="Email" type="email" />
+                    <FloatingInput
+                        label="Full Name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        required
+                    />
+                    <FloatingInput
+                        label="Email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
 
                     <div className="relative">
                         <FloatingInput
                             label="Password"
                             type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
                         />
 
                         <button
@@ -57,7 +96,7 @@ export default function SignupPage() {
                         </button>
                     </div>
 
-                    <Button className="w-full bg-white text-black hover:bg-neutral-200">
+                    <Button type="submit" disabled={loading} className="w-full bg-white text-black hover:bg-neutral-200">
                         {loading ? "Creating..." : "Sign up"}
                     </Button>
                 </form>
