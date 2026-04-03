@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -9,103 +10,69 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { TrendingUpIcon, TrendingDownIcon } from "lucide-react"
+import { TrendingUpIcon, WalletIcon, ArrowUpCircleIcon, ArrowDownCircleIcon } from "lucide-react"
+import { SummaryData } from "@/lib/services/record-service"
+import { cn } from "@/lib/utils"
 
-export function SectionCards() {
+interface SectionCardsProps {
+  summary: SummaryData | null
+  loading?: boolean
+}
+
+export function SectionCards({ summary, loading }: SectionCardsProps) {
+  const cards = [
+    {
+      title: "Current Balance",
+      value: summary?.balance || 0,
+      description: "Total available across all accounts",
+      icon: <WalletIcon className="size-5 text-primary" />,
+      color: "text-primary",
+      footer: "Updated just now"
+    },
+    {
+      title: "Total Income",
+      value: summary?.totalIncome || 0,
+      description: "Earnings and cash inflows",
+      icon: <ArrowUpCircleIcon className="size-5 text-green-500" />,
+      color: "text-green-500",
+      footer: "Monthly tracking active"
+    },
+    {
+      title: "Total Expense",
+      value: summary?.totalExpense || 0,
+      description: "Spending and cash outflows",
+      icon: <ArrowDownCircleIcon className="size-5 text-red-500" />,
+      color: "text-red-500",
+      footer: "Optimizing budget"
+    },
+  ]
+
   return (
-    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 *:data-[slot=card]:border-white/5 *:data-[slot=card]:bg-zinc-900/40 *:data-[slot=card]:transition-all *:data-[slot=card]:hover:bg-zinc-900/60 *:data-[slot=card]:hover:shadow-lg *:data-[slot=card]:hover:shadow-primary/5">
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Total Revenue</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            $1,250.00
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <TrendingUpIcon
-              />
-              +12.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up this month{" "}
-            <TrendingUpIcon className="size-4" />
+    <div className="grid grid-cols-1 gap-4 px-4 lg:px-6 md:grid-cols-3 *:data-[slot=card]:border-white/5 *:data-[slot=card]:bg-zinc-900/40 *:data-[slot=card]:transition-all *:data-[slot=card]:hover:bg-zinc-900/60 *:data-[slot=card]:hover:shadow-lg *:data-[slot=card]:hover:shadow-primary/5">
+      {cards.map((card, index) => (
+        <Card key={index} className="@container/card relative overflow-hidden">
+          <div className="absolute right-4 top-4 opacity-10 bg-gradient-to-br from-primary/30 to-transparent p-4 rounded-full">
+            {React.cloneElement(card.icon as React.ReactElement<{ className?: string }>, { className: "size-10" })}
           </div>
-          <div className="text-muted-foreground">
-            Visitors for the last 6 months
-          </div>
-        </CardFooter>
-      </Card>
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>New Customers</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            1,234
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <TrendingDownIcon
-              />
-              -20%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Down 20% this period{" "}
-            <TrendingDownIcon className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Acquisition needs attention
-          </div>
-        </CardFooter>
-      </Card>
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Active Accounts</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            45,678
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <TrendingUpIcon
-              />
-              +12.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Strong user retention{" "}
-            <TrendingUpIcon className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Engagement exceed targets</div>
-        </CardFooter>
-      </Card>
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <TrendingUpIcon
-              />
-              +4.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase{" "}
-            <TrendingUpIcon className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
-        </CardFooter>
-      </Card>
+          <CardHeader>
+            <CardDescription className="flex items-center gap-2">
+              {card.icon}
+              {card.title}
+            </CardDescription>
+            <CardTitle className={cn("text-3xl font-bold tabular-nums", card.color)}>
+              ${card.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </CardTitle>
+          </CardHeader>
+          <CardFooter className="flex-col items-start gap-1 text-sm">
+            <div className="text-muted-foreground line-clamp-1">
+              {card.description}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider font-semibold opacity-50">
+              {card.footer}
+            </div>
+          </CardFooter>
+        </Card>
+      ))}
     </div>
   )
 }
