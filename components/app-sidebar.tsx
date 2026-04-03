@@ -46,8 +46,21 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const user = JSON.parse(localStorage.getItem("user") || "{}")
+  const [user, setUser] = React.useState<any>({ name: "", email: "", avatar: "" })
+
   const router = useRouter();
+
+  React.useEffect(() => {
+    // Only access localStorage on the client side
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (e) {
+        console.error("Failed to parse user from localStorage", e)
+      }
+    }
+  }, [])
 
   const handleLogout = async () => {
     try {
