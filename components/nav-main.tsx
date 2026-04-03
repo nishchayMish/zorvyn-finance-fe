@@ -27,7 +27,7 @@ export function NavMain({
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = pathname.startsWith(item.url)
+            const isActive = pathname === item.url || (item.url !== "/dashboard" && pathname.startsWith(item.url))
 
             return (
               <SidebarMenuItem key={item.title}>
@@ -36,7 +36,6 @@ export function NavMain({
                   onClick={() => router.push(item.url)}
                   className={cn(
                     "cursor-pointer transition-all duration-200",
-                    // 🔥 PREMIUM ACTIVE STYLE
                     isActive &&
                     "bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 text-white shadow-lg"
                   )}
