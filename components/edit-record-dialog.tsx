@@ -24,6 +24,16 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { RecordData } from "@/lib/services/record-service"
 import { api } from "@/lib/api-client"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface EditRecordDialogProps {
   record: RecordData | null
@@ -40,8 +50,9 @@ export function EditRecordDialog({
   onRecordUpdated,
   onRecordDeleted
 }: EditRecordDialogProps) {
-  const [loading, setLoading] = React.useState(false)
+   const [loading, setLoading] = React.useState(false)
   const [deleteLoading, setDeleteLoading] = React.useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
   const [formData, setFormData] = React.useState<RecordData>({
     amount: 0,
     type: "expense",
@@ -86,9 +97,10 @@ export function EditRecordDialog({
 
   const handleDelete = async () => {
     if (!record?._id) return
+    setShowDeleteConfirm(true)
+  }
 
-    if (!confirm("Are you sure you want to delete this record?")) return
-
+  const confirmDelete = async () => {
     setDeleteLoading(true)
     try {
       const res = await api.delete(`/records/delete/${record?._id}`)
@@ -99,6 +111,7 @@ export function EditRecordDialog({
       toast.error(error.response?.data?.message || "Failed to delete record")
     } finally {
       setDeleteLoading(false)
+      setShowDeleteConfirm(false)
     }
   }
 
@@ -223,7 +236,39 @@ export function EditRecordDialog({
             </Button>
           </SheetFooter>
         </form>
-      </SheetContent>
+       </SheetContent>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent className="bg-zinc-950 border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl">Delete Transaction?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              This action cannot be undone. This will permanently delete the transaction
+              record from your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-white/10 hover:bg-white/5 text-white">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                confirmDelete()
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white border-none"
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? (
+                <>
+                  <Loader2Icon className="mr-2 size-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   )
 }
