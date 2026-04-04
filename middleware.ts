@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const publicRoutes = ["/login", "/signup"];
-
-// Role-based route access
-const roleRoutes: Record<string, string[]> = {
-    admin: ["/dashboard", "/transactions", "/analytics", "/users"],
-    analyst: ["/dashboard", "/transactions", "/analytics"],
-    viewer: ["/dashboard"],
-};
+// Public routes (accessible without login)
+const publicRoutes = [
+    "/",
+    "/login",
+    "/signup",
+    "/forgot-password",
+    "/reset-password",
+];
 
 export function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
@@ -16,30 +16,36 @@ export function middleware(req: NextRequest) {
     const token = req.cookies.get("token")?.value;
     const role = req.cookies.get("role")?.value;
 
-    // 1. Allow public routes
-    if (publicRoutes.includes(pathname)) {
-        if (token) {
-            // already logged in → redirect to dashboard
-            return NextResponse.redirect(new URL("/dashboard", req.url));
-        }
-        return NextResponse.next();
+    //  Check if route is public (handles dynamic routes too)
+    const isPublicRoute = publicRoutes.some(
+        (route) =>
+            pathname === route || pathname.startsWith(route + "/")
+    );
+
+    //  1. If logged-in user tries to access public route → redirect
+    if (isPublicRoute && token) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // 2. Protect private routes
-    if (!token) {
+    //  2. If NOT logged-in user tries private route → redirect to login
+    if (!isPublicRoute && !token) {
         return NextResponse.redirect(new URL("/login", req.url));
     }
 
     return NextResponse.next();
 }
 
+// Apply middleware to all relevant routes
 export const config = {
     matcher: [
+        "/",
+        "/login",
+        "/signup",
+        "/forgot-password",
+        "/reset-password",
         "/dashboard/:path*",
         "/transactions/:path*",
         "/analytics/:path*",
         "/users/:path*",
-        "/login",
-        "/signup",
     ],
 };
