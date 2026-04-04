@@ -96,6 +96,24 @@ const UsersPage = () => {
         }
     }
 
+    const handleStatusChange = async (userId: string, newStatus: boolean) => {
+        setUpdatingId(userId)
+        try {
+            const payload = {
+                isActive: newStatus
+            }
+            const res = await api.put(`/users/update/status/${userId}`, payload)
+            console.log(res)
+            setUsers(prev => prev.map(u => u._id === userId ? { ...u, isActive: newStatus } : u))
+            toast.success("Status updated successfully")
+        } catch (error) {
+            console.error("Failed to update status", error)
+            toast.error("Failed to update status")
+        } finally {
+            setUpdatingId(null)
+        }
+    }
+
     return (
         <div className="flex flex-col gap-6 pb-32">
             {/* Header */}
@@ -244,7 +262,10 @@ const UsersPage = () => {
                                                     <span className={isActive ? "text-green-400 text-xs" : "text-red-400 text-xs"}>
                                                         {isActive ? "Active" : "Inactive"}
                                                     </span>
-                                                    <Switch checked={isActive} />
+                                                    <Switch
+                                                        onCheckedChange={() => handleStatusChange(user._id, !isActive)}
+                                                        checked={isActive}
+                                                    />
                                                 </div>
                                             </TableCell>
 

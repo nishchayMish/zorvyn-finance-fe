@@ -6,23 +6,32 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import api from '@/lib/api-client';
 
 export default function SettingsPage() {
     const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [userId, setUserId] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem("user") || "{}");
-        setFullName(user.name || "");
-        setEmail(user.email || "");
+        const getMe = async () => {
+            try {
+                const res = await api.get("/users/me");
+                setUserId(res.data.user._id || "");
+                setFullName(res.data.user.name || "");
+                setEmail(res.data.user.email || "");
+            } catch (error) {
+                console.log("unable to get user", error);
+            }
+        }
+        getMe();
     }, [])
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (password && password !== confirmPassword) {
@@ -30,16 +39,14 @@ export default function SettingsPage() {
             return;
         }
 
-        // Just mock success since the user doesn't want API calls
-        toast.success("Profile updated successfully (Mock)");
-        console.log({ fullName, email, password });
-    };
-
-    const handleDeleteAccount = () => {
-        // Mock delete logic
-        toast.success("Account deleted successfully (Mock)");
-        setIsDeleteDialogOpen(false);
-        // would normally redirect to login
+        try {
+            const payload = { name: fullName, password }
+            const res = await api.patch(`/users/update/creds/${userId}`, payload);
+            console.log(res);
+            toast.success("Profile updated successfully");
+        } catch (error) {
+            console.log("unable to update user", error);
+        }
     };
 
     return (
@@ -120,53 +127,7 @@ export default function SettingsPage() {
                         </form>
                     </CardContent>
                 </Card>
-
-                <Card className="border-white/5 bg-zinc-900/40 backdrop-blur-sm opacity-100">
-                    <CardHeader>
-                        <CardTitle className="text-lg text-red-400">Danger Zone</CardTitle>
-                        <CardDescription className="text-neutral-400">
-                            Permanently delete your account and all associated data. This action is irreversible.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button
-                            variant="destructive"
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20"
-                        >
-                            Delete Account
-                        </Button>
-                    </CardContent>
-                </Card>
             </div>
-
-            {/* Delete Confirmation Dialog */}
-            {isDeleteDialogOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-zinc-950 border border-white/10 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                        <h2 className="text-xl font-semibold text-white mb-2">Delete Account?</h2>
-                        <p className="text-neutral-400 mb-6">
-                            Are you absolutely sure you want to delete your account? This will permanently remove all your data and cannot be undone.
-                        </p>
-                        <div className="flex gap-3 justify-end">
-                            <Button
-                                variant="ghost"
-                                onClick={() => setIsDeleteDialogOpen(false)}
-                                className="text-neutral-400 hover:text-white hover:bg-white/5"
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="destructive"
-                                onClick={handleDeleteAccount}
-                                className="bg-red-600 hover:bg-red-700 text-white px-6"
-                            >
-                                Delete Permanently
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
