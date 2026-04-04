@@ -7,7 +7,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     useEffect(() => {
         const handleFocus = async () => {
             try {
-                await fetch("/api/auth/refresh", {
+                await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/users/refresh`, {
                     method: "GET",
                     credentials: "include"
                 });
