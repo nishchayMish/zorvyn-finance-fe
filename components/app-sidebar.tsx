@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ChartBarIcon, Settings2Icon, CommandIcon, DatabaseIcon } from "lucide-react"
+import { LayoutDashboardIcon, ChartBarIcon, Settings2Icon, CommandIcon, DatabaseIcon, UsersIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import api from "@/lib/api-client"
 
@@ -64,6 +64,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Analytics",
       url: "/dashboard/analytics",
       icon: <ChartBarIcon />,
+    });
+  }
+
+  if (user?.role === "admin") {
+    navMain.push({
+      title: "Users",
+      url: "/dashboard/users",
+      icon: <UsersIcon />,
     });
   }
 
