@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { RecordData } from "@/lib/services/record-service"
-import { api } from "@/lib/api-client"
+import api from "@/lib/api-client"
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,7 +51,7 @@ export function EditRecordDialog({
   onRecordUpdated,
   onRecordDeleted
 }: EditRecordDialogProps) {
-   const [loading, setLoading] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
   const [deleteLoading, setDeleteLoading] = React.useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
   const [formData, setFormData] = React.useState<RecordData>({
@@ -236,7 +237,7 @@ export function EditRecordDialog({
             </Button>
           </SheetFooter>
         </form>
-       </SheetContent>
+      </SheetContent>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent className="bg-zinc-950 border-white/10">

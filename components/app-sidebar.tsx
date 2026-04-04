@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sidebar"
 import { LayoutDashboardIcon, ChartBarIcon, Settings2Icon, CommandIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { api } from "@/lib/api-client"
+import api from "@/lib/api-client"
 
 const data = {
   navMain: [

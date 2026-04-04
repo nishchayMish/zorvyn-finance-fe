@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/FloatingInput";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api-client";
+import api from "@/lib/api-client";
 
 export default function LoginPage() {
     const router = useRouter();

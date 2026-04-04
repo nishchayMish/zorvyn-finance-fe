@@ -15,7 +15,6 @@ export function middleware(req: NextRequest) {
 
     const token = req.cookies.get("token")?.value;
     const role = req.cookies.get("role")?.value;
-    // ⚠️ Only works if you store role in cookie OR decode JWT
 
     // 1. Allow public routes
     if (publicRoutes.includes(pathname)) {
@@ -30,21 +29,6 @@ export function middleware(req: NextRequest) {
     if (!token) {
         return NextResponse.redirect(new URL("/login", req.url));
     }
-
-    // 3. Role-based protection
-    // if (role) {
-    //     const allowedRoutes = roleRoutes[role] || [];
-
-    //     const isAllowed = allowedRoutes.some((route) =>
-    //         pathname.startsWith(route)
-    //     );
-
-    //     if (!isAllowed) {
-    //         return NextResponse.redirect(new URL("/dashboard", req.url));
-    //     }
-    // }
-
-    console.log(role)
 
     return NextResponse.next();
 }
