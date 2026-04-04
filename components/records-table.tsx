@@ -104,8 +104,8 @@ export function RecordsTable({ records, loading, onRefresh }: RecordsTableProps)
           ))}
         </TableBody>
       </Table>
-      
-      <EditRecordDialog 
+
+      <EditRecordDialog
         record={editingRecord}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}

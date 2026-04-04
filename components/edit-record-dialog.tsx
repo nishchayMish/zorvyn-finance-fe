@@ -22,7 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { recordService, RecordData } from "@/lib/services/record-service"
+import { RecordData } from "@/lib/services/record-service"
+import { api } from "@/lib/api-client"
 
 interface EditRecordDialogProps {
   record: RecordData | null
@@ -32,12 +33,12 @@ interface EditRecordDialogProps {
   onRecordDeleted?: () => void
 }
 
-export function EditRecordDialog({ 
-  record, 
-  open, 
-  onOpenChange, 
+export function EditRecordDialog({
+  record,
+  open,
+  onOpenChange,
   onRecordUpdated,
-  onRecordDeleted 
+  onRecordDeleted
 }: EditRecordDialogProps) {
   const [loading, setLoading] = React.useState(false)
   const [deleteLoading, setDeleteLoading] = React.useState(false)
@@ -68,10 +69,12 @@ export function EditRecordDialog({
 
     setLoading(true)
     try {
-      // Mocking API call for now as requested
-      // await recordService.updateRecord(record?._id!, formData)
-      console.log("Updating record:", record?._id, formData)
-      toast.success("Record updated successfully (Mock)")
+      const res = await api.patch("/records/update", {
+        ...formData,
+        id: record?._id
+      });
+
+      toast.success("Record updated successfully")
       onOpenChange(false)
       if (onRecordUpdated) onRecordUpdated()
     } catch (error: any) {
@@ -83,15 +86,13 @@ export function EditRecordDialog({
 
   const handleDelete = async () => {
     if (!record?._id) return
-    
+
     if (!confirm("Are you sure you want to delete this record?")) return
 
     setDeleteLoading(true)
     try {
-      // Mocking API call for now as requested
-      // await recordService.deleteRecord(record._id)
-      console.log("Deleting record:", record._id)
-      toast.success("Record deleted successfully (Mock)")
+      const res = await api.delete(`/records/delete/${record?._id}`)
+      toast.success("Record deleted successfully")
       onOpenChange(false)
       if (onRecordDeleted) onRecordDeleted()
     } catch (error: any) {
@@ -101,7 +102,7 @@ export function EditRecordDialog({
     }
   }
 
-  const categories = formData.type === "income" 
+  const categories = formData.type === "income"
     ? ["Salary", "Freelance", "Investment", "Gift", "Other"]
     : ["Food", "Transport", "Rent", "Utilities", "Entertainment", "Shopping", "Health", "Other"]
 
@@ -115,13 +116,13 @@ export function EditRecordDialog({
               Update your transaction details or remove it entirely.
             </SheetDescription>
           </SheetHeader>
-          
+
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-3">
               <Label>Type</Label>
-              <ToggleGroup 
-                type="single" 
-                value={formData.type} 
+              <ToggleGroup
+                type="single"
+                value={formData.type}
                 onValueChange={(value) => value && setFormData(prev => ({ ...prev, type: value as "income" | "expense", category: value === "income" ? "Salary" : "Food" }))}
                 className="grid grid-cols-2 gap-2"
               >
@@ -152,8 +153,8 @@ export function EditRecordDialog({
 
             <div className="space-y-2">
               <Label htmlFor="edit-category">Category</Label>
-              <Select 
-                value={formData.category} 
+              <Select
+                value={formData.category}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
               >
                 <SelectTrigger id="edit-category" className="bg-white/5 border-white/10">
@@ -200,10 +201,10 @@ export function EditRecordDialog({
                 </>
               ) : "Update Transaction"}
             </Button>
-            
-            <Button 
-              type="button" 
-              variant="outline" 
+
+            <Button
+              type="button"
+              variant="outline"
               className="w-full border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10 hover:text-red-400"
               onClick={handleDelete}
               disabled={loading || deleteLoading}
