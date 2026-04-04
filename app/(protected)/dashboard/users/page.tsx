@@ -69,30 +69,13 @@ const UsersPage = () => {
     const handleRoleChange = async (userId: string, newRole: string) => {
         setUpdatingId(userId)
         try {
-            await api.patch(`/users/${userId}`, { role: newRole })
-            setUsers(prev =>
-                prev.map(u => u._id === userId ? { ...u, role: newRole } : u)
-            )
+            const res = await api.put(`/users/update/role/${userId}`, { role: newRole })
+            console.log(res)
+            setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole } : u))
             toast.success("Role updated successfully")
         } catch (error) {
             console.error("Failed to update role", error)
             toast.error("Failed to update role")
-        } finally {
-            setUpdatingId(null)
-        }
-    }
-
-    const handleToggleActive = async (userId: string, currentStatus: boolean) => {
-        setUpdatingId(userId)
-        try {
-            await api.patch(`/users/${userId}`, { isActive: !currentStatus })
-            setUsers(prev =>
-                prev.map(u => u._id === userId ? { ...u, isActive: !currentStatus } : u)
-            )
-            toast.success(`User ${!currentStatus ? "activated" : "deactivated"}`)
-        } catch (error) {
-            console.error("Failed to update status", error)
-            toast.error("Failed to update status")
         } finally {
             setUpdatingId(null)
         }
@@ -234,7 +217,22 @@ const UsersPage = () => {
                                             <TableCell className="text-muted-foreground">{user.email}</TableCell>
 
                                             <TableCell>
-                                                <span className="capitalize">{user.role}</span>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-white/10 rounded-md bg-zinc-900/40 hover:bg-white/5">
+                                                            <UserIcon className="h-4 w-4 opacity-70" />
+                                                            {user.role}
+                                                            <ChevronDown className="h-3 w-3 opacity-60" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent className="bg-zinc-900 border-white/10">
+                                                        {ROLES.map(role => (
+                                                            <DropdownMenuItem onClick={() => handleRoleChange(user._id, role)} key={role} className="capitalize cursor-pointer">
+                                                                {role}
+                                                            </DropdownMenuItem>
+                                                        ))}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </TableCell>
 
                                             <TableCell className="text-center text-muted-foreground">
@@ -282,7 +280,7 @@ const UsersPage = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel className="bg-zinc-900 border-white/10 text-white hover:bg-zinc-800 hover:text-white">Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
+                        <AlertDialogAction
                             onClick={(e) => {
                                 e.preventDefault();
                                 if (userToDelete) handleDelete(userToDelete._id);
