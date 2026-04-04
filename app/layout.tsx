@@ -18,7 +18,6 @@ export const metadata: Metadata = {
 };
 
 import { Toaster } from "sonner";
-import AuthProvider from "@/providers/AuthProvider";
 
 export default function RootLayout({
   children,
@@ -31,9 +30,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        {children}
         <Toaster theme="dark" position="bottom-right" richColors />
       </body>
     </html>
