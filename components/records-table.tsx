@@ -16,22 +16,36 @@ import { PencilIcon } from "lucide-react"
 import { Button } from "./ui/button"
 import { EditRecordDialog } from "./edit-record-dialog"
 
-
 interface RecordsTableProps {
   records: RecordData[]
   loading?: boolean
   onRefresh?: () => void
+  hideActions?: boolean
 }
 
-
-export function RecordsTable({ records, loading, onRefresh }: RecordsTableProps) {
+export function RecordsTable({ records, loading, onRefresh, hideActions = false }: RecordsTableProps) {
   const [editingRecord, setEditingRecord] = React.useState<RecordData | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
+  const [userRole, setUserRole] = React.useState<string>("viewer")
+
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser)
+        setUserRole(u.role || "viewer")
+      } catch (e) {
+        console.error("Failed to parse user", e)
+      }
+    }
+  }, [])
 
   const handleEditClick = (record: RecordData) => {
     setEditingRecord(record)
     setIsEditDialogOpen(true)
   }
+
+  const showActions = !hideActions && userRole === "admin"
 
   if (loading) {
     return (
@@ -59,7 +73,7 @@ export function RecordsTable({ records, loading, onRefresh }: RecordsTableProps)
             <TableHead>Note</TableHead>
             <TableHead>Date</TableHead>
             <TableHead className="text-right">Amount</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            {showActions && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -89,17 +103,18 @@ export function RecordsTable({ records, loading, onRefresh }: RecordsTableProps)
               )}>
                 {record.type === "income" ? "+" : "-"}${record.amount.toLocaleString()}
               </TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEditClick(record)}
-                  className="text-gray-500 hover:text-gray-200 hover:bg-gray-500/10"
-                >
-                  <PencilIcon className="size-4" />
-                </Button>
-
-              </TableCell>
+              {showActions && (
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEditClick(record)}
+                    className="text-gray-500 hover:text-gray-200 hover:bg-gray-500/10"
+                  >
+                    <PencilIcon className="size-4" />
+                  </Button>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
@@ -113,6 +128,5 @@ export function RecordsTable({ records, loading, onRefresh }: RecordsTableProps)
         onRecordDeleted={onRefresh}
       />
     </div>
-
   )
 }

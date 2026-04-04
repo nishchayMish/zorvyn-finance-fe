@@ -12,41 +12,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ChartBarIcon, Settings2Icon, CommandIcon } from "lucide-react"
+import { LayoutDashboardIcon, ChartBarIcon, Settings2Icon, CommandIcon, DatabaseIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import api from "@/lib/api-client"
 
-const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: (
-        <LayoutDashboardIcon
-        />
-      ),
-    },
-    {
-      title: "Analytics",
-      url: "/dashboard/analytics",
-      icon: (
-        <ChartBarIcon
-        />
-      ),
-    },
-    {
-      title: "Settings",
-      url: "/dashboard/settings",
-      icon: (
-        <Settings2Icon
-        />
-      ),
-    },
-  ],
-}
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [user, setUser] = React.useState<any>({ name: "", email: "", avatar: "" })
+  const [user, setUser] = React.useState<any>({ name: "", email: "", avatar: "", role: "admin" })
 
   const router = useRouter();
 
@@ -73,6 +44,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       console.log(error);
     }
   }
+
+  // Define nav links dynamically based on role
+  const navMain = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: <LayoutDashboardIcon />,
+    },
+    {
+      title: "Records",
+      url: "/dashboard/records",
+      icon: <DatabaseIcon />,
+    },
+  ];
+
+  if (user?.role === "admin" || user?.role === "analyst") {
+    navMain.push({
+      title: "Analytics",
+      url: "/dashboard/analytics",
+      icon: <ChartBarIcon />,
+    });
+  }
+
+  // Also include settings depending on requirement, let's keep it for everyone or admin?
+  // Let's keep it available.
+  navMain.push({
+    title: "Settings",
+    url: "/dashboard/settings",
+    icon: <Settings2Icon />,
+  });
+
   return (
     <Sidebar className="border-r" collapsible="offcanvas" {...props}>
       <SidebarHeader className="border-b border-white/8">
@@ -91,7 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser handleLogout={handleLogout} user={user} />

@@ -27,9 +27,10 @@ import { recordService, RecordData } from "@/lib/services/record-service"
 
 interface AddRecordDialogProps {
   onRecordAdded?: () => void
+  triggerBtn?: React.ReactNode
 }
 
-export function AddRecordDialog({ onRecordAdded }: AddRecordDialogProps) {
+export function AddRecordDialog({ onRecordAdded, triggerBtn }: AddRecordDialogProps) {
   const [open, setOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   const [formData, setFormData] = React.useState<RecordData>({
@@ -74,9 +75,13 @@ export function AddRecordDialog({ onRecordAdded }: AddRecordDialogProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-2xl transition-transform hover:scale-110 active:scale-95" size="icon">
-          <PlusIcon className="size-6" />
-        </Button>
+        {triggerBtn ? (
+          triggerBtn
+        ) : (
+          <Button className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-2xl transition-transform hover:scale-110 active:scale-95" size="icon">
+            <PlusIcon className="size-6" />
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent side="right" className="sm:max-w-md">
         <form onSubmit={handleSubmit} className="flex h-full flex-col">
