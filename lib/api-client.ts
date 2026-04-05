@@ -1,31 +1,32 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
 
 const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: BASE_URL,
+    withCredentials: true,
     headers: {
         "Content-Type": "application/json",
     },
-    withCredentials: true,
 });
 
 api.interceptors.response.use(
     (res) => res,
     async (error) => {
         const originalRequest = error.config;
-        // Avoid infinite loop if refresh token fails
+        
         if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes("/users/refresh")) {
             originalRequest._retry = true;
             try {
-                // Ensure users/refresh is used which results in /api/users/refresh
-                await axios.get(`${API_BASE_URL}/users/refresh`, {
+                // Manually call the refresh endpoint to get a new access token (cookie)
+                await axios.get(`${BASE_URL}/users/refresh`, {
                     withCredentials: true
                 });
+                
+                // Retry the original request
                 return api(originalRequest);
             } catch (err) {
-                console.error("Refresh token error:", err);
-                // Clear state or redirect to login if refresh fails
+                console.error("Auth Refresh Failed:", err);
                 if (typeof window !== "undefined") {
                     window.location.href = "/login";
                 }
