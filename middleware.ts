@@ -15,6 +15,8 @@ export function middleware(req: NextRequest) {
 
     const token = req.cookies.get("token")?.value;
     const role = req.cookies.get("role")?.value;
+    
+    console.log(`[Middleware] Path: ${pathname}, Status: ${token ? "Logged In" : "Not Logged In"}`);
 
     //  Check if route is public (handles dynamic routes too)
     const isPublicRoute = publicRoutes.some(
