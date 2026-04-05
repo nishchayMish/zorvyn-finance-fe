@@ -41,7 +41,7 @@ export function SectionCards({ summary, loading }: SectionCardsProps) {
   const cards = [
     {
       title: "Current Balance",
-      value: summary?.balance || 0,
+      value: summary?.netBalance || 0,
       description: "Total available across all accounts",
       icon: <WalletIcon />,
       color: "text-primary",
@@ -81,7 +81,7 @@ export function SectionCards({ summary, loading }: SectionCardsProps) {
                 </div>
               </div>
               <CardTitle className={cn("text-2xl pt-2 font-bold tabular-nums truncate tracking-tight w-full", card.color)}>
-                ${card.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                ₹{card.value.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </CardTitle>
             </CardHeader>
             <CardFooter className="flex-col items-start gap-1">

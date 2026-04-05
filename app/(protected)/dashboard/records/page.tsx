@@ -3,23 +3,42 @@
 import * as React from "react"
 import { RecordsTable } from "@/components/records-table"
 import { AddRecordDialog } from "@/components/add-record-dialog"
-import { recordService, RecordData } from "@/lib/services/record-service"
+import { recordService, RecordData, RecordsResponse } from "@/lib/services/record-service"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
-import { PlusIcon } from "lucide-react"
+import { PlusIcon, SearchIcon, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function RecordsPage() {
-  const [records, setRecords] = React.useState<RecordData[]>([])
-  const [filteredRecords, setFilteredRecords] = React.useState<RecordData[]>([])
+  const [data, setData] = React.useState<RecordsResponse | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [userRole, setUserRole] = React.useState<string>("viewer")
 
-  // Filters
+  // Filters & Pagination State
+  const [page, setPage] = React.useState(1)
   const [typeFilter, setTypeFilter] = React.useState<string>("all")
   const [categoryFilter, setCategoryFilter] = React.useState<string>("all")
+  const [searchQuery, setSearchQuery] = React.useState("")
   const [categories, setCategories] = React.useState<string[]>([])
+
+  // Debounced search
+  const [debouncedSearch, setDebouncedSearch] = React.useState("")
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   React.useEffect(() => {
     const storedUser = localStorage.getItem("user")
@@ -36,11 +55,21 @@ export default function RecordsPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const recordsRes = await recordService.getRecords()
-      setRecords(recordsRes)
+      const res = await recordService.getRecords({
+        page,
+        limit: 5,
+        type: typeFilter === "all" ? undefined : typeFilter,
+        category: categoryFilter === "all" ? undefined : categoryFilter,
+        search: debouncedSearch || undefined
+      })
+      setData(res)
 
-      const uniqueCats = Array.from(new Set(recordsRes.map(r => r.category))).filter(Boolean)
-      setCategories(uniqueCats as string[])
+      // Get unique categories for the filter (ideally from a separate endpoint, 
+      // but we'll extract from current results or keep a static list)
+      if (categories.length === 0 && res.records.length > 0) {
+        const uniqueCats = Array.from(new Set(res.records.map(r => r.category))).filter(Boolean)
+        setCategories(uniqueCats as string[])
+      }
 
     } catch (error: any) {
       console.error("Records error:", error)
@@ -52,21 +81,12 @@ export default function RecordsPage() {
 
   React.useEffect(() => {
     fetchData()
-  }, [])
+  }, [page, typeFilter, categoryFilter, debouncedSearch])
 
+  // Reset page when filters change
   React.useEffect(() => {
-    let result = records
-
-    if (typeFilter !== "all") {
-      result = result.filter(r => r.type === typeFilter)
-    }
-
-    if (categoryFilter !== "all") {
-      result = result.filter(r => r.category === categoryFilter)
-    }
-
-    setFilteredRecords(result)
-  }, [typeFilter, categoryFilter, records])
+    setPage(1)
+  }, [typeFilter, categoryFilter, debouncedSearch])
 
   return (
     <div className="flex flex-col gap-6 pb-32">
@@ -91,7 +111,17 @@ export default function RecordsPage() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 px-4 lg:px-6 items-center justify-between">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4 flex-1">
+          <div className="relative w-full md:w-64">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search notes..." 
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="All Types" />
@@ -117,12 +147,63 @@ export default function RecordsPage() {
         </div>
       </div>
 
-      <div className="px-4 lg:px-6">
+      <div className="px-4 lg:px-6 space-y-4">
         <RecordsTable
-          records={filteredRecords}
+          records={data?.records || []}
           loading={loading}
           onRefresh={fetchData}
         />
+
+        {data && (
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: data.pagination.totalPages }, (_, i) => i + 1).map((p) => {
+                  if (
+                    data.pagination.totalPages > 7 &&
+                    p !== 1 &&
+                    p !== data.pagination.totalPages &&
+                    Math.abs(p - page) > 1
+                  ) {
+                    if (Math.abs(p - page) === 2) return <PaginationEllipsis key={p} />
+                    return null
+                  }
+
+                  return (
+                    <PaginationItem key={p}>
+                      <PaginationLink 
+                        isActive={page === p}
+                        onClick={() => setPage(p)}
+                        className="cursor-pointer"
+                      >
+                        {p}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                })}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
+                    disabled={page === data.pagination.totalPages || data.pagination.totalPages === 0}
+                    className={(page === data.pagination.totalPages || data.pagination.totalPages === 0) ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+            <p className="text-xs text-muted-foreground">
+              Showing {data.records.length} of {data.pagination.totalRecords} records
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

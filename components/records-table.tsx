@@ -101,7 +101,7 @@ export function RecordsTable({ records, loading, onRefresh, hideActions = false 
                 "text-right font-semibold",
                 record.type === "income" ? "text-green-500" : "text-red-500"
               )}>
-                {record.type === "income" ? "+" : "-"}${record.amount.toLocaleString()}
+                {record.type === "income" ? "+" : "-"}₹{record.amount.toLocaleString()}
               </TableCell>
               {showActions && (
                 <TableCell className="text-right">

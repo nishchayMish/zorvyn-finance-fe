@@ -36,7 +36,7 @@ export default function AnalyticsPage() {
     setLoading(true)
     try {
       const recordsRes = await recordService.getRecords()
-      setRecords(recordsRes)
+      setRecords(recordsRes.records)
     } catch (error: any) {
       console.error("Analytics error:", error)
       toast.error("Failed to load analytics data")

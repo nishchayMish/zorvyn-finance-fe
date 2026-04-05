@@ -27,7 +27,7 @@ export function DashboardCharts({ records, loading }: { records: RecordData[], l
 
     // Calculate Monthly Trends (Last 6 months)
     const monthMap: Record<string, { income: number; expense: number }> = {}
-    
+
     // Initialize last 6 months
     for (let i = 5; i >= 0; i--) {
       const d = new Date()
@@ -66,7 +66,7 @@ export function DashboardCharts({ records, loading }: { records: RecordData[], l
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 lg:px-6">
-      
+
       {/* Monthly Trends Bar Chart */}
       <Card className="rounded-2xl shadow-sm bg-zinc-950/40 backdrop-blur-md">
         <CardHeader>
@@ -78,8 +78,8 @@ export function DashboardCharts({ records, loading }: { records: RecordData[], l
             <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
               <XAxis dataKey="month" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
-              <Tooltip 
+              <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
+              <Tooltip
                 cursor={{ fill: '#333', opacity: 0.4 }}
                 contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: 'none', color: '#fff' }}
               />
@@ -113,10 +113,10 @@ export function DashboardCharts({ records, loading }: { records: RecordData[], l
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 itemStyle={{ color: '#fff' }}
                 contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: 'none', color: '#fff' }}
-                formatter={(value: any) => `$${Number(value).toLocaleString()}`}
+                formatter={(value: any) => `₹${Number(value).toLocaleString()}`}
               />
             </PieChart>
           </ResponsiveContainer>

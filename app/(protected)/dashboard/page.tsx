@@ -22,7 +22,7 @@ export default function Page() {
         recordService.getRecords()
       ])
       setSummary(summaryRes)
-      setRecords(recordsRes)
+      setRecords(recordsRes.records)
     } catch (error: any) {
       console.error("Dashboard error:", error)
       toast.error("Failed to load dashboard data")
