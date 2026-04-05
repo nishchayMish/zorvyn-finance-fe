@@ -32,17 +32,26 @@ function LoginForm() {
             email,
             password,
         }
+        console.log("[Login] Sending payload:", payload);
+
         try {
             setLoading(true);
             const res = await api.post("/users/login", payload);
+            console.log("[Login] Response received:", res.status, res.data);
 
             if (res.status === 200) {
-                toast.success("Welcome back!");
+                console.log("[Login] Setting local storage...");
                 localStorage.setItem("user", JSON.stringify(res.data.user));
-                router.push("/dashboard");
+                toast.success("Welcome back!");
+                
+                console.log("[Login] Redirecting to /dashboard...");
+                // Short timeout to ensure toast and storage are processed
+                setTimeout(() => {
+                    window.location.href = "/dashboard";
+                }, 800);
             }
         } catch (error: any) {
-            console.error(error);
+            console.error("[Login] XHR Error:", error);
             const message = error.response?.data?.message || "Invalid credentials. Please try again.";
             toast.error(message);
         } finally {
