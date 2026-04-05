@@ -31,6 +31,10 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import {
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
     Loader2,
     User as UserIcon,
     Search,
@@ -45,13 +49,11 @@ import {
 import { toast } from "sonner"
 import { Button } from '@/components/ui/button'
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
 type UserRecord = {
     _id: string
     name: string
     email: string
-    role: "admin" | "analyst" | "user" | "viewer"
+    role: "admin" | "analyst" | "viewer"
     isActive: boolean
     isVerified: boolean
     createdAt: string
@@ -67,12 +69,20 @@ type UserCounts = {
     totalInactive: number
 }
 
+type PaginationMeta = {
+    currentPage: number
+    totalPages: number
+    limit: number
+}
+
 export interface GetAllUsersResponse {
     data: UserRecord[]
     counts: UserCounts
+    pagination: PaginationMeta
 }
 
 const ROLES = ["viewer", "analyst", "admin"] as const
+const LIMIT_OPTIONS = [5, 10, 20, 50] as const
 
 const roleConfig: Record<string, {
     label: string
@@ -110,8 +120,6 @@ const roleConfig: Record<string, {
         border: "border-zinc-500/20",
     },
 }
-
-// ── Sub-components ───────────────────────────────────────────────────────────
 
 const StatCard = ({
     label,
@@ -159,6 +167,178 @@ const AvatarInitial = ({ name }: { name: string }) => {
     )
 }
 
+const PaginationControls = ({
+    page,
+    pagination,
+    limit,
+    onPageChange,
+    onLimitChange,
+}: {
+    page: number
+    pagination: PaginationMeta | null
+    limit: number
+    onPageChange: (p: number) => void
+    onLimitChange: (l: number) => void
+}) => {
+    const [jumpValue, setJumpValue] = useState("")
+
+    if (!pagination || pagination.totalPages <= 1) return null
+
+    const { totalPages, currentPage } = pagination
+
+    // Build page number list with ellipsis markers
+    const getPageItems = (): (number | "ellipsis-l" | "ellipsis-r")[] => {
+        if (totalPages <= 7) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1)
+        }
+        const items: (number | "ellipsis-l" | "ellipsis-r")[] = [1]
+        if (currentPage > 3) items.push("ellipsis-l")
+        const rangeStart = Math.max(2, currentPage - 1)
+        const rangeEnd = Math.min(totalPages - 1, currentPage + 1)
+        for (let i = rangeStart; i <= rangeEnd; i++) items.push(i)
+        if (currentPage < totalPages - 2) items.push("ellipsis-r")
+        items.push(totalPages)
+        return items
+    }
+
+    const handleJump = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key !== "Enter") return
+        const p = parseInt(jumpValue, 10)
+        if (!isNaN(p) && p >= 1 && p <= totalPages) {
+            onPageChange(p)
+        }
+        setJumpValue("")
+    }
+
+    const pageItems = getPageItems()
+
+    return (
+        <div className="px-4 lg:px-8 pb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+
+            {/* ── Left: rows per page ── */}
+            <div className="flex items-center gap-2.5">
+                <span className="text-xs text-zinc-500 whitespace-nowrap">Rows per page</span>
+                <div className="flex items-center gap-1">
+                    {LIMIT_OPTIONS.map(l => (
+                        <button
+                            key={l}
+                            onClick={() => { onLimitChange(l); onPageChange(1) }}
+                            className={cn(
+                                "h-7 w-9 rounded-md border text-xs font-medium transition-all duration-150",
+                                l === limit
+                                    ? "bg-violet-500/20 border-violet-500/40 text-violet-300 shadow-[0_0_8px_rgba(139,92,246,0.15)]"
+                                    : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 hover:border-zinc-700"
+                            )}
+                        >
+                            {l}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* ── Right: page navigation ── */}
+            <div className="flex items-center gap-1.5">
+
+                {/* First page */}
+                <button
+                    onClick={() => onPageChange(1)}
+                    disabled={page === 1}
+                    className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    title="First page"
+                >
+                    <ChevronsLeft className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Previous */}
+                <button
+                    onClick={() => onPageChange(Math.max(1, page - 1))}
+                    disabled={page === 1}
+                    className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    title="Previous page"
+                >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Page numbers */}
+                <div className="flex items-center gap-1">
+                    {pageItems.map((item, idx) => {
+                        if (item === "ellipsis-l" || item === "ellipsis-r") {
+                            return (
+                                <span key={`${item}-${idx}`} className="h-7 w-7 flex items-center justify-center text-zinc-600 text-xs select-none">
+                                    ···
+                                </span>
+                            )
+                        }
+                        return (
+                            <button
+                                key={item}
+                                onClick={() => onPageChange(item)}
+                                className={cn(
+                                    "h-7 w-7 flex items-center justify-center rounded-md border text-xs font-medium transition-all duration-150",
+                                    item === page
+                                        ? "bg-violet-500/20 border-violet-500/40 text-violet-300 shadow-[0_0_8px_rgba(139,92,246,0.15)]"
+                                        : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 hover:border-zinc-700"
+                                )}
+                            >
+                                {item}
+                            </button>
+                        )
+                    })}
+                </div>
+
+                {/* Next */}
+                <button
+                    onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+                    disabled={page === totalPages}
+                    className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    title="Next page"
+                >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Last page */}
+                <button
+                    onClick={() => onPageChange(totalPages)}
+                    disabled={page === totalPages}
+                    className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    title="Last page"
+                >
+                    <ChevronsRight className="h-3.5 w-3.5" />
+                </button>
+
+                {/* Divider */}
+                <div className="h-4 w-px bg-zinc-800 mx-1" />
+
+                {/* Jump to page */}
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-zinc-500 whitespace-nowrap">Go to</span>
+                    <input
+                        type="number"
+                        min={1}
+                        max={totalPages}
+                        value={jumpValue}
+                        onChange={e => setJumpValue(e.target.value)}
+                        onKeyDown={handleJump}
+                        placeholder={String(page)}
+                        className={cn(
+                            "h-7 w-12 rounded-md border border-zinc-800 bg-zinc-900 px-2",
+                            "text-xs text-zinc-200 placeholder:text-zinc-600",
+                            "focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20",
+                            "transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        )}
+                    />
+                </div>
+
+                {/* Page count label */}
+                <span className="text-xs text-zinc-600 whitespace-nowrap ml-1">
+                    of {totalPages}
+                </span>
+            </div>
+
+        </div>
+    )
+}
+
 const UsersPage = () => {
     const [users, setUsers] = useState<UserRecord[]>([])
     const [counts, setCounts] = useState<UserCounts | null>(null)
@@ -166,27 +346,28 @@ const UsersPage = () => {
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
     const [userToDelete, setUserToDelete] = useState<UserRecord | null>(null)
+    const [page, setPage] = useState(1)
+    const [limit, setLimit] = useState(5)
+    const [pagination, setPagination] = useState<PaginationMeta | null>(null)
+
+    const fetchUsers = async () => {
+        setLoading(true)
+        try {
+            const res = await api.get(`/users?page=${page}&limit=${limit}`)
+            if (res.data.data) setUsers(res.data.data)
+            if (res.data?.counts) setCounts(res.data.counts)
+            if (res.data.pagination) setPagination(res.data.pagination)
+        } catch (error) {
+            console.error("Failed to fetch users", error)
+            toast.error("Failed to load users")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await api.get("/users")
-                // Handle both { data, counts } shape and plain array responses
-                if (res.data?.data) {
-                    setUsers(res.data.data)
-                    setCounts(res.data.counts ?? null)
-                } else {
-                    setUsers(res.data)
-                }
-            } catch (error) {
-                console.error("Failed to fetch users", error)
-                toast.error("Failed to load users")
-            } finally {
-                setLoading(false)
-            }
-        }
         fetchUsers()
-    }, [])
+    }, [page, limit])
 
     const handleRoleChange = async (userId: string, newRole: string) => {
         setUpdatingId(userId)
@@ -231,6 +412,11 @@ const UsersPage = () => {
         }
     }
 
+    const handleLimitChange = (newLimit: number) => {
+        setLimit(newLimit)
+        setPage(1)
+    }
+
     return (
         <div className="flex flex-col gap-6 min-h-screen bg-zinc-950 text-white">
 
@@ -267,8 +453,6 @@ const UsersPage = () => {
 
             {/* ── Toolbar ── */}
             <div className="px-4 lg:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-
-                {/* Search */}
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
                     <Input
@@ -279,9 +463,7 @@ const UsersPage = () => {
                     />
                 </div>
 
-                {/* Filters */}
                 <div className="flex items-center gap-2">
-
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="flex items-center gap-1.5 px-3 py-1.5 h-9 text-sm border rounded-lg bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors">
@@ -314,7 +496,6 @@ const UsersPage = () => {
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
-
                 </div>
             </div>
 
@@ -357,7 +538,6 @@ const UsersPage = () => {
                                                 isUpdating ? "opacity-50 pointer-events-none" : "hover:bg-white/[0.02]",
                                             )}
                                         >
-                                            {/* Avatar + name + email */}
                                             <TableCell className="pl-5 py-3.5">
                                                 <div className="flex items-center gap-3">
                                                     <AvatarInitial name={user.name} />
@@ -368,7 +548,6 @@ const UsersPage = () => {
                                                 </div>
                                             </TableCell>
 
-                                            {/* Role dropdown */}
                                             <TableCell className="py-3.5">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
@@ -395,12 +574,10 @@ const UsersPage = () => {
                                                 </DropdownMenu>
                                             </TableCell>
 
-                                            {/* Created at */}
                                             <TableCell className="text-center text-xs text-zinc-500 py-3.5">
                                                 {new Date(user.createdAt).toLocaleDateString("en-IN")}
                                             </TableCell>
 
-                                            {/* Status toggle */}
                                             <TableCell className="text-center py-3.5">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <span className={cn(
@@ -409,7 +586,6 @@ const UsersPage = () => {
                                                     )}>
                                                         {isActive ? "Active" : "Inactive"}
                                                     </span>
-                                                    {/* FIX 7: pass checked value as boolean, use checked not defaultChecked */}
                                                     <Switch
                                                         checked={isActive}
                                                         onCheckedChange={(checked) => handleStatusChange(user._id, checked)}
@@ -417,7 +593,6 @@ const UsersPage = () => {
                                                 </div>
                                             </TableCell>
 
-                                            {/* Delete */}
                                             <TableCell className="text-right pr-5 py-3.5">
                                                 <Button
                                                     variant="outline"
@@ -437,7 +612,14 @@ const UsersPage = () => {
                 </div>
             </div>
 
-            {/* ── Delete confirmation dialog ── */}
+            <PaginationControls
+                page={page}
+                pagination={pagination}
+                limit={limit}
+                onPageChange={setPage}
+                onLimitChange={handleLimitChange}
+            />
+
             <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
                 <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white">
                     <AlertDialogHeader>
