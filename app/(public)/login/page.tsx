@@ -43,6 +43,7 @@ function LoginForm() {
                 console.log("[Login] Setting local storage...");
                 localStorage.setItem("user", JSON.stringify(res.data.user));
                 toast.success("Welcome back!");
+                router.push('/dashboard');
             }
         } catch (error: any) {
             console.error("[Login] XHR Error:", error);
