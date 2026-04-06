@@ -4,6 +4,7 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { Bar, BarChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer, YAxis, PieChart, Pie, Cell } from "recharts"
 import { useAllRecords } from "@/lib/hooks/use-queries"
+import type { RecordData } from "@/lib/services/record-service"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
@@ -16,7 +17,7 @@ export default function AnalyticsPage() {
   const [typeFilter, setTypeFilter] = React.useState<string>("expense")
 
   const { data: recordsData, isLoading } = useAllRecords()
-  const records = recordsData?.records ?? []
+  const records: RecordData[] = recordsData?.records ?? []
 
   React.useEffect(() => {
     const storedUser = localStorage.getItem("user")
@@ -82,7 +83,7 @@ export default function AnalyticsPage() {
         <p className="text-muted-foreground mt-1">Discover deeper insights into your spending and earnings.</p>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="px-4 lg:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="h-[432px] rounded-2xl border border-zinc-800 bg-zinc-950/40 p-6 flex flex-col gap-4">
