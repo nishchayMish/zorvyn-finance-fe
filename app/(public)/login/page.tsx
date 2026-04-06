@@ -8,6 +8,7 @@ import { FloatingInput } from "@/components/ui/FloatingInput";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api-client";
+import Cookies from "js-cookie";
 
 function LoginForm() {
     const router = useRouter();
@@ -40,10 +41,15 @@ function LoginForm() {
             console.log("[Login] Response received:", res.status, res.data);
 
             if (res.status === 200) {
-                console.log("[Login] Setting local storage...");
-                localStorage.setItem("user", JSON.stringify(res.data.user));
+                const { accessToken, refreshToken, role, user } = res.data;
+
+                Cookies.set("accessToken", accessToken, { expires: 1 });
+                Cookies.set("refreshToken", refreshToken, { expires: 7 });
+                Cookies.set("role", role);
+                localStorage.setItem("user", JSON.stringify(user));
+
                 toast.success("Welcome back!");
-                router.push('/dashboard');
+                router.push("/dashboard");
             }
         } catch (error: any) {
             console.error("[Login] XHR Error:", error);
