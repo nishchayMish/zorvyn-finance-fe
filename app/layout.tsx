@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner";
+import { QueryProvider } from "@/lib/query-client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +19,6 @@ export const metadata: Metadata = {
   description: "Advanced financial analytics and role-based access control for modern teams.",
 };
 
-import { Toaster } from "sonner";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -30,7 +30,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <QueryProvider>
+          {children}
+        </QueryProvider>
         <Toaster theme="dark" position="bottom-right" richColors />
       </body>
     </html>

@@ -1,11 +1,6 @@
 "use client"
-import {
-    getUsersAction,
-    updateUserRoleAction,
-    updateUserStatusAction,
-    deleteUserAction
-} from "@/lib/actions/user-actions"
-import React, { useEffect, useState } from 'react'
+
+import React, { useState, useEffect } from 'react'
 import { Skeleton } from "@/components/ui/skeleton"
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -23,10 +18,13 @@ import { Button } from '@/components/ui/button'
 import { cn } from "@/lib/utils"
 import {
     ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    Loader2, User as UserIcon, Search, Filter, Trash2,
+    User as UserIcon, Search, Filter, Trash2,
     ShieldCheck, Eye, BarChart2, Users, CircleDot,
 } from "lucide-react"
 import { toast } from "sonner"
+import {
+    useUsers, useUpdateUserRole, useUpdateUserStatus, useDeleteUser,
+} from "@/lib/hooks/use-queries"
 
 type UserRecord = {
     _id: string
@@ -37,15 +35,6 @@ type UserRecord = {
     isVerified: boolean
     createdAt: string
     updatedAt: string
-}
-
-type UserCounts = {
-    totalUsers: number
-    totalAdmins: number
-    totalAnalysts: number
-    totalViewers: number
-    totalActive: number
-    totalInactive: number
 }
 
 type PaginationMeta = {
@@ -92,9 +81,7 @@ const PaginationControls = ({
     page: number; pagination: PaginationMeta | null; limit: number; onPageChange: (p: number) => void; onLimitChange: (l: number) => void
 }) => {
     const [jumpValue, setJumpValue] = useState("")
-
     if (!pagination || pagination.totalPages <= 1) return null
-
     const { totalPages } = pagination
 
     const getPageItems = (): (number | "ellipsis-l" | "ellipsis-r")[] => {
@@ -131,175 +118,81 @@ const PaginationControls = ({
                     ))}
                 </div>
             </div>
-
             <div className="flex items-center gap-1.5">
-                <button onClick={() => onPageChange(1)} disabled={page === 1}
-                    className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors">
-                    <ChevronsLeft className="h-3.5 w-3.5" />
-                </button>
-                <button onClick={() => onPageChange(Math.max(1, page - 1))} disabled={page === 1}
-                    className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors">
-                    <ChevronLeft className="h-3.5 w-3.5" />
-                </button>
-
+                <button onClick={() => onPageChange(1)} disabled={page === 1} className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"><ChevronsLeft className="h-3.5 w-3.5" /></button>
+                <button onClick={() => onPageChange(Math.max(1, page - 1))} disabled={page === 1} className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"><ChevronLeft className="h-3.5 w-3.5" /></button>
                 <div className="flex items-center gap-1">
                     {getPageItems().map((item, idx) => {
-                        if (item === "ellipsis-l" || item === "ellipsis-r") {
-                            return <span key={`${item}-${idx}`} className="h-7 w-7 flex items-center justify-center text-zinc-600 text-xs select-none">···</span>
-                        }
+                        if (item === "ellipsis-l" || item === "ellipsis-r") return <span key={`${item}-${idx}`} className="h-7 w-7 flex items-center justify-center text-zinc-600 text-xs select-none">···</span>
                         return (
-                            <button key={item} onClick={() => onPageChange(item)}
-                                className={cn("h-7 w-7 flex items-center justify-center rounded-md border text-xs font-medium transition-all duration-150",
-                                    item === page
-                                        ? "bg-violet-500/20 border-violet-500/40 text-violet-300 shadow-[0_0_8px_rgba(139,92,246,0.15)]"
-                                        : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 hover:border-zinc-700"
-                                )}>
-                                {item}
-                            </button>
+                            <button key={item} onClick={() => onPageChange(item)} className={cn("h-7 w-7 flex items-center justify-center rounded-md border text-xs font-medium transition-all duration-150", item === page ? "bg-violet-500/20 border-violet-500/40 text-violet-300 shadow-[0_0_8px_rgba(139,92,246,0.15)]" : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 hover:border-zinc-700")}>{item}</button>
                         )
                     })}
                 </div>
-
-                <button onClick={() => onPageChange(Math.min(totalPages, page + 1))} disabled={page === totalPages}
-                    className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors">
-                    <ChevronRight className="h-3.5 w-3.5" />
-                </button>
-                <button onClick={() => onPageChange(totalPages)} disabled={page === totalPages}
-                    className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors">
-                    <ChevronsRight className="h-3.5 w-3.5" />
-                </button>
-
+                <button onClick={() => onPageChange(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"><ChevronRight className="h-3.5 w-3.5" /></button>
+                <button onClick={() => onPageChange(totalPages)} disabled={page === totalPages} className="h-7 w-7 flex items-center justify-center rounded-md border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"><ChevronsRight className="h-3.5 w-3.5" /></button>
                 <div className="h-4 w-px bg-zinc-800 mx-1" />
-
-                <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-zinc-500 whitespace-nowrap">Go to</span>
-                    <input type="number" min={1} max={totalPages} value={jumpValue}
-                        onChange={e => setJumpValue(e.target.value)} onKeyDown={handleJump}
-                        placeholder={String(page)}
-                        className="h-7 w-12 rounded-md border border-zinc-800 bg-zinc-900 px-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                </div>
+                <span className="text-xs text-zinc-500 whitespace-nowrap">Go to</span>
+                <input type="number" min={1} max={totalPages} value={jumpValue}
+                    onChange={e => setJumpValue(e.target.value)} onKeyDown={handleJump}
+                    placeholder={String(page)}
+                    className="h-7 w-12 rounded-md border border-zinc-800 bg-zinc-900 px-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
                 <span className="text-xs text-zinc-600 whitespace-nowrap ml-1">of {totalPages}</span>
             </div>
         </div>
     )
 }
 
-const UsersPage = () => {
-    const [users, setUsers] = useState<UserRecord[]>([])
-    const [counts, setCounts] = useState<UserCounts | null>(null)
-    const [loading, setLoading] = useState(true)
+export default function UsersPage() {
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [userToDelete, setUserToDelete] = useState<UserRecord | null>(null)
-
     const [page, setPage] = useState(1)
     const [limit, setLimit] = useState(5)
-    const [pagination, setPagination] = useState<PaginationMeta | null>(null)
-
     const [searchQuery, setSearchQuery] = useState("")
     const [roleFilter, setRoleFilter] = useState("all")
     const [statusFilter, setStatusFilter] = useState("all")
-
-    function useDebounce<T>(value: T, delay: number): T {
-        const [debounced, setDebounced] = useState(value)
-        useEffect(() => {
-            const t = setTimeout(() => setDebounced(value), delay)
-            return () => clearTimeout(t)
-        }, [value, delay])
-        return debounced
-    }
-
-    const debouncedSearch = useDebounce(searchQuery, 1000)
-
-    const fetchUsers = async () => {
-        setLoading(true)
-        try {
-            const res = await getUsersAction({
-                page,
-                limit,
-                search: debouncedSearch,
-                role: roleFilter,
-                status: statusFilter,
-            })
-            if (res.success) {
-                if (res.data) setUsers(res.data)
-                if (res.counts) setCounts(res.counts as any)
-                if (res.pagination) setPagination(res.pagination)
-            } else {
-                toast.error(res.message || "Failed to load users")
-            }
-        } catch {
-            toast.error("Failed to load users")
-        } finally {
-            setLoading(false)
-        }
-    }
+    const [debouncedSearch, setDebouncedSearch] = useState("")
 
     useEffect(() => {
-        setPage(1)
-    }, [debouncedSearch, roleFilter, statusFilter])
+        const t = setTimeout(() => setDebouncedSearch(searchQuery), 600)
+        return () => clearTimeout(t)
+    }, [searchQuery])
 
-    useEffect(() => {
-        fetchUsers()
-    }, [page, limit, debouncedSearch, roleFilter, statusFilter])
+    useEffect(() => { setPage(1) }, [debouncedSearch, roleFilter, statusFilter])
+
+    const queryParams = { page, limit, search: debouncedSearch, role: roleFilter, status: statusFilter }
+    const { data, isLoading, isFetching } = useUsers(queryParams)
+    const updateRole = useUpdateUserRole()
+    const updateStatus = useUpdateUserStatus()
+    const deleteUser = useDeleteUser()
+
+    const users: UserRecord[] = (data as any)?.data ?? []
+    const counts = (data as any)?.counts ?? null
+    const pagination: PaginationMeta | null = (data as any)?.pagination ?? null
+    const hasActiveFilters = roleFilter !== "all" || statusFilter !== "all"
 
     const handleRoleChange = async (userId: string, newRole: string) => {
         setUpdatingId(userId)
-        try {
-            const res = await updateUserRoleAction(userId, newRole)
-            if (res.success) {
-                setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole as UserRecord["role"] } : u))
-                toast.success("Role updated successfully")
-            } else {
-                toast.error(res.message || "Failed to update role")
-            }
-        } catch {
-            toast.error("Failed to update role")
-        } finally {
-            setUpdatingId(null)
-        }
-    }
-
-    const handleDelete = async (userId: string) => {
-        setUpdatingId(userId)
-        try {
-            const res = await deleteUserAction(userId)
-            if (res.success) {
-                setUsers(prev => prev.filter(u => u._id !== userId))
-                toast.success("User deleted successfully")
-                setUserToDelete(null)
-            } else {
-                toast.error(res.message || "Failed to delete user")
-            }
-        } catch {
-            toast.error("Failed to delete user")
-        } finally {
-            setUpdatingId(null)
-        }
+        await updateRole.mutateAsync({ userId, role: newRole })
+        setUpdatingId(null)
     }
 
     const handleStatusChange = async (userId: string, newStatus: boolean) => {
         setUpdatingId(userId)
-        try {
-            const res = await updateUserStatusAction(userId, newStatus)
-            if (res.success) {
-                setUsers(prev => prev.map(u => u._id === userId ? { ...u, isActive: newStatus } : u))
-                toast.success("Status updated successfully")
-            } else {
-                toast.error(res.message || "Failed to update status")
-            }
-        } catch {
-            toast.error("Failed to update status")
-        } finally {
-            setUpdatingId(null)
-        }
+        await updateStatus.mutateAsync({ userId, isActive: newStatus })
+        setUpdatingId(null)
     }
 
-    const hasActiveFilters = roleFilter !== "all" || statusFilter !== "all"
+    const handleDelete = async (userId: string) => {
+        setUpdatingId(userId)
+        await deleteUser.mutateAsync(userId)
+        setUserToDelete(null)
+        setUpdatingId(null)
+    }
 
     return (
         <div className="flex flex-col gap-6 min-h-screen bg-zinc-950 text-white">
-
             <div className="px-4 lg:px-8 pt-8 flex flex-col gap-1">
                 <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
@@ -312,8 +205,9 @@ const UsersPage = () => {
                 </div>
             </div>
 
+            {/* Stats */}
             <div className="px-4 lg:px-8">
-                {loading && !counts ? (
+                {isLoading && !counts ? (
                     <div className="flex gap-3 flex-wrap">
                         {[...Array(6)].map((_, i) => (
                             <div key={i} className="flex-1 min-w-[150px] h-[92px] rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
@@ -337,6 +231,7 @@ const UsersPage = () => {
                 ) : null}
             </div>
 
+            {/* Filters */}
             <div className="px-4 lg:px-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="relative w-full max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
@@ -347,14 +242,10 @@ const UsersPage = () => {
                         className="pl-9 h-9 bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-violet-500/40 focus-visible:border-zinc-600"
                     />
                 </div>
-
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className={cn(
-                                "flex items-center gap-1.5 px-3 py-1.5 h-9 text-sm border rounded-lg bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors",
-                                statusFilter !== "all" && "border-violet-500/40 text-violet-300 bg-violet-500/10"
-                            )}>
+                            <button className={cn("flex items-center gap-1.5 px-3 py-1.5 h-9 text-sm border rounded-lg bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors", statusFilter !== "all" && "border-violet-500/40 text-violet-300 bg-violet-500/10")}>
                                 <Filter className="h-3.5 w-3.5 opacity-70" />
                                 {statusFilter === "all" ? "Status" : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
                                 <ChevronDown className="h-3 w-3 opacity-50 ml-0.5" />
@@ -369,10 +260,7 @@ const UsersPage = () => {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className={cn(
-                                "flex items-center gap-1.5 px-3 py-1.5 h-9 text-sm border rounded-lg bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors",
-                                roleFilter !== "all" && "border-violet-500/40 text-violet-300 bg-violet-500/10"
-                            )}>
+                            <button className={cn("flex items-center gap-1.5 px-3 py-1.5 h-9 text-sm border rounded-lg bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 transition-colors", roleFilter !== "all" && "border-violet-500/40 text-violet-300 bg-violet-500/10")}>
                                 <UserIcon className="h-3.5 w-3.5 opacity-70" />
                                 {roleFilter === "all" ? "Role" : roleFilter.charAt(0).toUpperCase() + roleFilter.slice(1)}
                                 <ChevronDown className="h-3 w-3 opacity-50 ml-0.5" />
@@ -381,16 +269,13 @@ const UsersPage = () => {
                         <DropdownMenuContent className="bg-zinc-900 border-zinc-800 text-zinc-200">
                             <DropdownMenuItem onClick={() => setRoleFilter("all")} className="cursor-pointer focus:bg-zinc-800">All</DropdownMenuItem>
                             {ROLES.map(role => (
-                                <DropdownMenuItem key={role} onClick={() => setRoleFilter(role)} className="capitalize cursor-pointer focus:bg-zinc-800">
-                                    {role}
-                                </DropdownMenuItem>
+                                <DropdownMenuItem key={role} onClick={() => setRoleFilter(role)} className="capitalize cursor-pointer focus:bg-zinc-800">{role}</DropdownMenuItem>
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
 
                     {hasActiveFilters && (
-                        <button
-                            onClick={() => { setRoleFilter("all"); setStatusFilter("all") }}
+                        <button onClick={() => { setRoleFilter("all"); setStatusFilter("all") }}
                             className="h-9 px-3 text-xs text-zinc-400 border border-zinc-800 rounded-lg bg-zinc-900 hover:bg-zinc-800 hover:text-white transition-colors">
                             Clear filters
                         </button>
@@ -398,10 +283,11 @@ const UsersPage = () => {
                 </div>
             </div>
 
+            {/* Table */}
             <div className="px-4 lg:px-8">
-                <div className="w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40">
-                    {loading ? (
-                        <div className="w-full">
+                <div className={cn("w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40 transition-opacity duration-200", isFetching && !isLoading ? "opacity-60" : "opacity-100")}>
+                    {isLoading ? (
+                        <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent border-zinc-800">
                                     <TableHead className="w-[40%] pl-5 py-3"><Skeleton className="h-4 w-20 bg-zinc-800" /></TableHead>
@@ -435,7 +321,7 @@ const UsersPage = () => {
                                     </TableRow>
                                 ))}
                             </TableBody>
-                        </div>
+                        </Table>
                     ) : users.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-2 text-zinc-500">
                             <Users className="h-8 w-8 opacity-30" />
@@ -457,7 +343,6 @@ const UsersPage = () => {
                                     const isUpdating = updatingId === user._id
                                     const isActive = user.isActive !== false
                                     const role = roleConfig[user.role] ?? roleConfig.viewer
-
                                     return (
                                         <TableRow key={user._id} className={cn("border-zinc-800/60 transition-colors", isUpdating ? "opacity-50 pointer-events-none" : "hover:bg-white/[0.02]")}>
                                             <TableCell className="pl-5 py-3.5">
@@ -469,30 +354,23 @@ const UsersPage = () => {
                                                     </div>
                                                 </div>
                                             </TableCell>
-
                                             <TableCell className="py-3.5">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <button className={cn("flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded-md transition-colors hover:brightness-110", role.color, role.bg, role.border)}>
-                                                            {role.icon}
-                                                            {role.label}
-                                                            <ChevronDown className="h-3 w-3 opacity-50 ml-0.5" />
+                                                            {role.icon}{role.label}<ChevronDown className="h-3 w-3 opacity-50 ml-0.5" />
                                                         </button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent className="bg-zinc-900 border-zinc-800 text-zinc-200">
                                                         {ROLES.map(r => (
-                                                            <DropdownMenuItem key={r} className="capitalize cursor-pointer focus:bg-zinc-800" onClick={() => handleRoleChange(user._id, r)}>
-                                                                {r}
-                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem key={r} className="capitalize cursor-pointer focus:bg-zinc-800" onClick={() => handleRoleChange(user._id, r)}>{r}</DropdownMenuItem>
                                                         ))}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </TableCell>
-
                                             <TableCell className="text-center text-xs text-zinc-500 py-3.5">
                                                 {new Date(user.createdAt).toLocaleDateString("en-IN")}
                                             </TableCell>
-
                                             <TableCell className="text-center py-3.5">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <span className={cn("text-xs font-medium", isActive ? "text-emerald-400" : "text-red-400")}>
@@ -501,7 +379,6 @@ const UsersPage = () => {
                                                     <Switch checked={isActive} onCheckedChange={(checked) => handleStatusChange(user._id, checked)} />
                                                 </div>
                                             </TableCell>
-
                                             <TableCell className="text-right pr-5 py-3.5">
                                                 <Button variant="outline" size="icon"
                                                     className="h-8 w-8 border-zinc-800 bg-transparent text-zinc-500 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-colors cursor-pointer"
@@ -518,13 +395,7 @@ const UsersPage = () => {
                 </div>
             </div>
 
-            <PaginationControls
-                page={page}
-                pagination={pagination}
-                limit={limit}
-                onPageChange={setPage}
-                onLimitChange={(l) => { setLimit(l); setPage(1) }}
-            />
+            <PaginationControls page={page} pagination={pagination} limit={limit} onPageChange={setPage} onLimitChange={(l) => { setLimit(l); setPage(1) }} />
 
             <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
                 <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white">
@@ -537,19 +408,15 @@ const UsersPage = () => {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-zinc-900 border-zinc-700 text-white hover:bg-zinc-800 hover:text-white">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="bg-zinc-900 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white">Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={(e) => { e.preventDefault(); if (userToDelete) handleDelete(userToDelete._id) }}
-                            className="bg-red-500 hover:bg-red-600 text-white border-0">
-                            {updatingId === userToDelete?._id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                            Delete User
+                            onClick={() => userToDelete && handleDelete(userToDelete._id)}
+                            className="bg-red-600 hover:bg-red-700 text-white border-0">
+                            Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-
         </div>
     )
 }
-
-export default UsersPage

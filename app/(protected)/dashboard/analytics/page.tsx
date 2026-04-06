@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { Bar, BarChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer, YAxis, PieChart, Pie, Cell } from "recharts"
-import { recordService, RecordData } from "@/lib/services/record-service"
+import { useAllRecords } from "@/lib/hooks/use-queries"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
@@ -13,9 +13,10 @@ const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'
 
 export default function AnalyticsPage() {
   const router = useRouter()
-  const [records, setRecords] = React.useState<RecordData[]>([])
-  const [loading, setLoading] = React.useState(true)
-  const [typeFilter, setTypeFilter] = React.useState<string>("expense") // Default to viewing expenses
+  const [typeFilter, setTypeFilter] = React.useState<string>("expense")
+
+  const { data: recordsData, isLoading } = useAllRecords()
+  const records = recordsData?.records ?? []
 
   React.useEffect(() => {
     const storedUser = localStorage.getItem("user")
@@ -31,23 +32,6 @@ export default function AnalyticsPage() {
       }
     }
   }, [router])
-
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      const recordsRes = await recordService.getRecords()
-      setRecords(recordsRes.records)
-    } catch (error: any) {
-      console.error("Analytics error:", error)
-      toast.error("Failed to load analytics data")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  React.useEffect(() => {
-    fetchData()
-  }, [])
 
   const { monthlyData, categoryData } = React.useMemo(() => {
     if (!records || records.length === 0) return { monthlyData: [], categoryData: [] }
