@@ -43,12 +43,6 @@ function LoginForm() {
                 console.log("[Login] Setting local storage...");
                 localStorage.setItem("user", JSON.stringify(res.data.user));
                 toast.success("Welcome back!");
-                
-                console.log("[Login] Redirecting to /dashboard...");
-                // Short timeout to ensure toast and storage are processed
-                setTimeout(() => {
-                    window.location.href = "/dashboard";
-                }, 800);
             }
         } catch (error: any) {
             console.error("[Login] XHR Error:", error);
