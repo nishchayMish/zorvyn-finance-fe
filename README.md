@@ -101,4 +101,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-Built with ❤️ by the Zorvyn Team.
+admin credentials
+email = Bhaipasha983@gmail.com
+pwd = 12345678
