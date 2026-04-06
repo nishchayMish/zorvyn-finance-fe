@@ -7,6 +7,7 @@ import { recordService, RecordData } from "@/lib/services/record-service"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -23,7 +24,6 @@ export default function AnalyticsPage() {
         const u = JSON.parse(storedUser)
         if (u.role === "viewer") {
           toast.error("Unauthorized to view analytics")
-          // Just use window location if router is tricky in useEffect, but router.replace works usually
           router.replace("/dashboard")
         }
       } catch (e) {
@@ -101,8 +101,34 @@ export default function AnalyticsPage() {
       {loading ? (
         <div className="px-4 lg:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="h-96 rounded-2xl bg-zinc-900/10 animate-pulse" />
-            <div className="h-96 rounded-2xl bg-zinc-900/10 animate-pulse" />
+            <div className="h-[432px] rounded-2xl border border-zinc-800 bg-zinc-950/40 p-6 flex flex-col gap-4">
+               <div className="flex justify-between items-center">
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-32 bg-zinc-800" />
+                    <Skeleton className="h-3 w-48 bg-zinc-800" />
+                  </div>
+                  <Skeleton className="h-8 w-24 bg-zinc-800" />
+               </div>
+               <div className="flex-1 flex items-center justify-center">
+                  <Skeleton className="h-48 w-48 rounded-full bg-zinc-800" />
+               </div>
+               <div className="flex gap-2 justify-center">
+                  <Skeleton className="h-3 w-12 bg-zinc-800" />
+                  <Skeleton className="h-3 w-12 bg-zinc-800" />
+                  <Skeleton className="h-3 w-12 bg-zinc-800" />
+               </div>
+            </div>
+            <div className="h-[432px] rounded-2xl border border-zinc-800 bg-zinc-950/40 p-6 flex flex-col gap-4">
+               <div className="space-y-2">
+                  <Skeleton className="h-5 w-32 bg-zinc-800" />
+                  <Skeleton className="h-3 w-48 bg-zinc-800" />
+               </div>
+               <div className="flex-1 flex items-end gap-2 px-2">
+                  {[...Array(12)].map((_, i) => (
+                    <Skeleton key={i} className="flex-1 bg-zinc-800" style={{ height: `${Math.random() * 60 + 20}%` }} />
+                  ))}
+               </div>
+            </div>
           </div>
         </div>
       ) : records.length === 0 ? (
@@ -112,7 +138,7 @@ export default function AnalyticsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 lg:px-6">
           
-          <Card className="rounded-2xl shadow-sm bg-zinc-950/40 backdrop-blur-md">
+          <Card className="rounded-2xl shadow-sm bg-zinc-950/40 backdrop-blur-md border-zinc-800">
             <CardHeader className="flex flex-row items-center justify-between pb-8">
               <div>
                 <CardTitle>Category Breakdown</CardTitle>
@@ -152,15 +178,15 @@ export default function AnalyticsPage() {
                     <Tooltip 
                       itemStyle={{ color: '#fff' }}
                       contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: 'none', color: '#fff' }}
-                      formatter={(value: any) => `$${Number(value).toLocaleString()}`}
+                      formatter={(value: any) => `₹${Number(value).toLocaleString()}`}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               )}
               {categoryData.length > 0 && (
-                <div className="mt-4 flex flex-wrap max-h-20 overflow-y-auto gap-2 justify-center w-full px-4">
+                <div className="mt-4 flex flex-wrap max-h-20 overflow-y-auto gap-2 justify-center w-full px-4 text-center">
                   {categoryData.map((d, i) => (
-                    <div key={d.name} className="flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap">
+                    <div key={d.name} className="flex items-center gap-1.5 text-[10px] text-muted-foreground whitespace-nowrap">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
                       {d.name}
                     </div>
@@ -170,7 +196,7 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl shadow-sm bg-zinc-950/40 backdrop-blur-md">
+          <Card className="rounded-2xl shadow-sm bg-zinc-950/40 backdrop-blur-md border-zinc-800">
             <CardHeader>
               <CardTitle>Year Overview</CardTitle>
               <CardDescription>Income vs Expense over 12 months</CardDescription>
@@ -180,11 +206,11 @@ export default function AnalyticsPage() {
                 <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
                   <XAxis dataKey="month" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+                  <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
                   <Tooltip 
                     cursor={{ fill: '#333', opacity: 0.4 }}
                     contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: 'none', color: '#fff' }}
-                    formatter={(value: any) => `$${Number(value).toLocaleString()}`}
+                    formatter={(value: any) => `₹${Number(value).toLocaleString()}`}
                   />
                   <Bar dataKey="income" name="Income" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={30} />
                   <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={30} />

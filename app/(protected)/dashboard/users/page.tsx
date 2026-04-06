@@ -6,6 +6,7 @@ import {
     deleteUserAction
 } from "@/lib/actions/user-actions"
 import React, { useEffect, useState } from 'react'
+import { Skeleton } from "@/components/ui/skeleton"
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
@@ -313,8 +314,16 @@ const UsersPage = () => {
 
             <div className="px-4 lg:px-8">
                 {loading && !counts ? (
-                    <div className="flex items-center gap-2 text-zinc-600 text-sm py-6">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Loading stats…
+                    <div className="flex gap-3 flex-wrap">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="flex-1 min-w-[150px] h-[92px] rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+                                <Skeleton className="h-3 w-16 bg-zinc-800 mb-3" />
+                                <div className="flex items-end justify-between">
+                                    <Skeleton className="h-8 w-12 bg-zinc-800" />
+                                    <Skeleton className="h-5 w-5 rounded-md bg-zinc-800" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : counts ? (
                     <div className="flex gap-3 flex-wrap">
@@ -392,8 +401,40 @@ const UsersPage = () => {
             <div className="px-4 lg:px-8">
                 <div className="w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40">
                     {loading ? (
-                        <div className="flex items-center justify-center gap-2 py-24 text-zinc-500 text-sm">
-                            <Loader2 className="h-4 w-4 animate-spin" /> Loading users…
+                        <div className="w-full">
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent border-zinc-800">
+                                    <TableHead className="w-[40%] pl-5 py-3"><Skeleton className="h-4 w-20 bg-zinc-800" /></TableHead>
+                                    <TableHead className="py-3"><Skeleton className="h-4 w-16 bg-zinc-800" /></TableHead>
+                                    <TableHead className="text-center py-3"><Skeleton className="h-4 w-16 mx-auto bg-zinc-800" /></TableHead>
+                                    <TableHead className="text-center py-3"><Skeleton className="h-4 w-16 mx-auto bg-zinc-800" /></TableHead>
+                                    <TableHead className="pr-5 py-3"><Skeleton className="h-4 w-16 ml-auto bg-zinc-800" /></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {[...Array(limit)].map((_, i) => (
+                                    <TableRow key={i} className="border-zinc-800/60">
+                                        <TableCell className="pl-5 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-10 w-10 rounded-full bg-zinc-800" />
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-4 w-24 bg-zinc-800" />
+                                                    <Skeleton className="h-3 w-32 bg-zinc-800" />
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell><Skeleton className="h-6 w-20 bg-zinc-800 rounded-md" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-16 mx-auto bg-zinc-800" /></TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Skeleton className="h-4 w-12 bg-zinc-800" />
+                                                <Skeleton className="h-5 w-9 rounded-full bg-zinc-800" />
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="pr-5"><Skeleton className="h-8 w-8 ml-auto rounded-lg bg-zinc-800" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
                         </div>
                     ) : users.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-24 gap-2 text-zinc-500">

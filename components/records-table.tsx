@@ -15,6 +15,8 @@ import { PencilIcon, Loader2, ArrowUpRight, ArrowDownLeft } from "lucide-react"
 import { Button } from "./ui/button"
 import { EditRecordDialog } from "./edit-record-dialog"
 
+import { Skeleton } from "@/components/ui/skeleton"
+
 interface RecordsTableProps {
   records: RecordData[]
   loading?: boolean
@@ -49,8 +51,39 @@ export function RecordsTable({ records, loading, onRefresh, hideActions = false 
   return (
     <div className="w-full overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40">
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-24 text-zinc-500 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading records…
+        <div className="w-full">
+            <Table>
+                <TableHeader>
+                    <TableRow className="hover:bg-transparent border-zinc-800">
+                        <TableHead className="w-[120px] pl-5 py-3"><Skeleton className="h-4 w-16 bg-zinc-800" /></TableHead>
+                        <TableHead className="py-3"><Skeleton className="h-4 w-20 bg-zinc-800" /></TableHead>
+                        <TableHead className="py-3"><Skeleton className="h-4 w-32 bg-zinc-800" /></TableHead>
+                        <TableHead className="text-center py-3"><Skeleton className="h-4 w-16 mx-auto bg-zinc-800" /></TableHead>
+                        <TableHead className="text-right py-3"><Skeleton className="h-4 w-16 ml-auto bg-zinc-800" /></TableHead>
+                        {showActions && <TableHead className="pr-5 py-3"><Skeleton className="h-4 w-8 ml-auto bg-zinc-800" /></TableHead>}
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {[...Array(5)].map((_, i) => (
+                        <TableRow key={i} className="border-zinc-800/60">
+                            <TableCell className="pl-5 py-4">
+                                <Skeleton className="h-6 w-16 rounded-md bg-zinc-800" />
+                            </TableCell>
+                            <TableCell><Skeleton className="h-4 w-24 bg-zinc-800" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-40 bg-zinc-800" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-20 mx-auto bg-zinc-800" /></TableCell>
+                            <TableCell className="text-right">
+                                <Skeleton className="h-4 w-16 ml-auto bg-zinc-800" />
+                            </TableCell>
+                            {showActions && (
+                                <TableCell className="pr-5 text-right">
+                                    <Skeleton className="h-8 w-8 ml-auto rounded-lg bg-zinc-800" />
+                                </TableCell>
+                            )}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         </div>
       ) : records.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-2 text-zinc-500">

@@ -1,6 +1,6 @@
 "use client"
-
 import * as React from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { RecordsTable } from "@/components/records-table"
 import { AddRecordDialog } from "@/components/add-record-dialog"
 import { recordService, RecordData, SummaryData, RecordsResponse } from "@/lib/services/record-service"
@@ -245,7 +245,19 @@ export default function RecordsPage() {
             </div>
 
             <div className="px-4 lg:px-8">
-                {summary ? (
+                {!summary ? (
+                    <div className="flex gap-3 flex-wrap">
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="flex-1 min-w-[150px] h-[92px] rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+                                <Skeleton className="h-3 w-16 bg-zinc-800 mb-3" />
+                                <div className="flex items-end justify-between">
+                                    <Skeleton className="h-8 w-24 bg-zinc-800" />
+                                    <Skeleton className="h-5 w-5 rounded-md bg-zinc-800" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
                     <div className="flex gap-3 flex-wrap">
                         <StatCard 
                             label="Total Income" 
@@ -265,10 +277,6 @@ export default function RecordsPage() {
                             icon={<IndianRupee className="h-5 w-5 text-violet-400" />} 
                             borderColor="border-violet-500/20" 
                         />
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-2 text-zinc-600 text-sm py-6">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Loading stats…
                     </div>
                 )}
             </div>
