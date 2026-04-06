@@ -4,6 +4,7 @@ import * as React from "react"
 import { Bar, BarChart, CartesianGrid, XAxis, Tooltip, ResponsiveContainer, YAxis, PieChart, Pie, Cell } from "recharts"
 import { RecordData } from "@/lib/services/record-service"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function DashboardCharts({ records, loading }: { records: RecordData[], loading: boolean }) {
   const [monthlyData, setMonthlyData] = React.useState<any[]>([])
@@ -21,14 +22,13 @@ export function DashboardCharts({ records, loading }: { records: RecordData[], l
     })
 
     setIncomeExpenseData([
-      { name: "Income", value: totalIncome, color: "#22c55e" }, // green-500
-      { name: "Expense", value: totalExpense, color: "#ef4444" }, // red-500
+      { name: "Income", value: totalIncome, color: "#22c55e" },
+      { name: "Expense", value: totalExpense, color: "#ef4444" },
     ])
 
     // Calculate Monthly Trends (Last 6 months)
     const monthMap: Record<string, { income: number; expense: number }> = {}
 
-    // Initialize last 6 months
     for (let i = 5; i >= 0; i--) {
       const d = new Date()
       d.setMonth(d.getMonth() - i)
@@ -50,14 +50,47 @@ export function DashboardCharts({ records, loading }: { records: RecordData[], l
       income: data.income,
       expense: data.expense,
     })))
-
   }, [records])
 
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 lg:px-6">
-        <div className="h-72 rounded-2xl bg-zinc-900/10 animate-pulse" />
-        <div className="h-72 rounded-2xl bg-zinc-900/10 animate-pulse" />
+        {/* Bar chart skeleton */}
+        <Card className="rounded-2xl border-zinc-800 bg-zinc-950/40 h-72 flex flex-col p-6 gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32 bg-zinc-800" />
+            <Skeleton className="h-3 w-48 bg-zinc-800" />
+          </div>
+          <div className="flex-1 flex items-end gap-2 px-2">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton
+                key={i}
+                className="flex-1 bg-zinc-800 rounded-sm"
+                style={{ height: `${[55, 78, 42, 90, 65, 80][i]}%` }}
+              />
+            ))}
+          </div>
+        </Card>
+        {/* Pie chart skeleton */}
+        <Card className="rounded-2xl border-zinc-800 bg-zinc-950/40 h-72 flex flex-col p-6 gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32 bg-zinc-800" />
+            <Skeleton className="h-3 w-40 bg-zinc-800" />
+          </div>
+          <div className="flex-1 flex items-center justify-center gap-6">
+            <Skeleton className="h-36 w-36 rounded-full bg-zinc-800" />
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-3 rounded-full bg-zinc-800" />
+                <Skeleton className="h-3 w-16 bg-zinc-800" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-3 rounded-full bg-zinc-800" />
+                <Skeleton className="h-3 w-16 bg-zinc-800" />
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
     )
   }
@@ -73,7 +106,7 @@ export function DashboardCharts({ records, loading }: { records: RecordData[], l
           <CardTitle>Monthly Trends</CardTitle>
           <CardDescription>Income and Expenses over the last 6 months</CardDescription>
         </CardHeader>
-        <CardContent className="h-72 w-full">
+        <CardContent className="h-52 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
@@ -96,7 +129,7 @@ export function DashboardCharts({ records, loading }: { records: RecordData[], l
           <CardTitle>Income vs Expense</CardTitle>
           <CardDescription>Overall distribution</CardDescription>
         </CardHeader>
-        <CardContent className="h-72 w-full flex items-center justify-center">
+        <CardContent className="h-52 w-full flex items-center justify-center">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
