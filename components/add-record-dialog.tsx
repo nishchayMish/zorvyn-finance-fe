@@ -50,19 +50,23 @@ export function AddRecordDialog({ onRecordAdded, triggerBtn }: AddRecordDialogPr
 
     setLoading(true)
     try {
-      await recordService.createRecord(formData)
-      toast.success("Record added successfully")
-      setOpen(false)
-      setFormData({
-        amount: 0,
-        type: "expense",
-        category: "Food",
-        date: new Date().toISOString().split("T")[0],
-        note: "",
-      })
-      if (onRecordAdded) onRecordAdded()
+      const res = await recordService.createRecord(formData)
+      if (res.success) {
+        toast.success("Record added successfully")
+        setOpen(false)
+        setFormData({
+          amount: 0,
+          type: "expense",
+          category: "Food",
+          date: new Date().toISOString().split("T")[0],
+          note: "",
+        })
+        if (onRecordAdded) onRecordAdded()
+      } else {
+        toast.error(res.message || "Failed to add record")
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to add record")
+      toast.error("Failed to add record")
     } finally {
       setLoading(false)
     }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import api from '@/lib/api-client';
+import { getMeAction, updateUserCredentialsAction } from "@/lib/actions/user-actions";
 
 export default function SettingsPage() {
     const [fullName, setFullName] = useState("");
@@ -20,10 +20,12 @@ export default function SettingsPage() {
     useEffect(() => {
         const getMe = async () => {
             try {
-                const res = await api.get("/users/me");
-                setUserId(res.data.user._id || "");
-                setFullName(res.data.user.name || "");
-                setEmail(res.data.user.email || "");
+                const res = await getMeAction();
+                if (res.success && res.user) {
+                    setUserId(res.user._id || "");
+                    setFullName(res.user.name || "");
+                    setEmail(res.user.email || "");
+                }
             } catch (error) {
                 console.log("unable to get user", error);
             }
@@ -40,12 +42,20 @@ export default function SettingsPage() {
         }
 
         try {
-            const payload = { name: fullName, password }
-            const res = await api.patch(`/users/update/creds/${userId}`, payload);
-            console.log(res);
-            toast.success("Profile updated successfully");
+            const payload = { name: fullName, password: password || undefined };
+            const res = await updateUserCredentialsAction(userId, payload);
+            if (res.success) {
+                toast.success("Profile updated successfully");
+                // Update local storage if needed
+                if (res.user) {
+                    localStorage.setItem("user", JSON.stringify(res.user));
+                }
+            } else {
+                toast.error(res.message || "Failed to update profile");
+            }
         } catch (error) {
             console.log("unable to update user", error);
+            toast.error("Failed to update profile");
         }
     };
 

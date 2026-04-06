@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/FloatingInput";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api-client";
+import { signupAction } from "@/lib/actions/auth-actions";
 
 export default function SignupPage() {
     const router = useRouter();
@@ -27,16 +27,17 @@ export default function SignupPage() {
 
         try {
             setLoading(true);
-            const res = await api.post("/users/register", payload);
+            const res = await signupAction(payload);
 
-            if (res.status === 201) {
-                toast.success("Account created successfully!");
+            if (res.success) {
+                toast.success(res.message || "Account created successfully!");
                 router.push("/login");
+            } else {
+                toast.error(res.message || "Registration failed.");
             }
         } catch (error: any) {
             console.error(error);
-            const message = error.response?.data?.message || "Registration failed. Please try again.";
-            toast.error(message);
+            toast.error("Registration failed. Please try again.");
         } finally {
             setLoading(false);
         }

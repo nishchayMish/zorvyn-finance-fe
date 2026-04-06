@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/FloatingInput";
 import { toast } from "sonner";
-import api from "@/lib/api-client";
+import { forgotPasswordAction } from "@/lib/actions/auth-actions";
 
 export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false);
@@ -17,16 +17,17 @@ export default function ForgotPasswordPage() {
         e.preventDefault();
         try {
             setLoading(true);
-            const res = await api.post("/users/forgot-password", { email });
+            const res = await forgotPasswordAction(email);
 
-            if (res.status === 200) {
+            if (res.success) {
                 toast.success("Reset link sent!");
                 setIsSubmitted(true);
+            } else {
+                toast.error(res.message || "Something went wrong.");
             }
         } catch (error: any) {
             console.error(error);
-            const message = error.response?.data?.message || "Something went wrong. Please try again.";
-            toast.error(message);
+            toast.error("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }

@@ -22,8 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { RecordData } from "@/lib/services/record-service"
-import api from "@/lib/api-client"
+import { recordService, RecordData } from "@/lib/services/record-service"
 
 import {
   AlertDialog,
@@ -81,16 +80,20 @@ export function EditRecordDialog({
 
     setLoading(true)
     try {
-      const res = await api.patch("/records/update", {
+      const res = await recordService.updateRecord({
         ...formData,
-        id: record?._id
+        _id: record?._id
       });
 
-      toast.success("Record updated successfully")
-      onOpenChange(false)
-      if (onRecordUpdated) onRecordUpdated()
+      if (res) {
+        toast.success("Record updated successfully")
+        onOpenChange(false)
+        if (onRecordUpdated) onRecordUpdated()
+      } else {
+        toast.error("Failed to update record")
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to update record")
+      toast.error("Failed to update record")
     } finally {
       setLoading(false)
     }
@@ -104,12 +107,17 @@ export function EditRecordDialog({
   const confirmDelete = async () => {
     setDeleteLoading(true)
     try {
-      const res = await api.delete(`/records/delete/${record?._id}`)
-      toast.success("Record deleted successfully")
-      onOpenChange(false)
-      if (onRecordDeleted) onRecordDeleted()
+      if (!record?._id) return
+      const res = await recordService.deleteRecord(record._id)
+      if (res.success) {
+        toast.success("Record deleted successfully")
+        onOpenChange(false)
+        if (onRecordDeleted) onRecordDeleted()
+      } else {
+        toast.error(res.message || "Failed to delete record")
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete record")
+      toast.error("Failed to delete record")
     } finally {
       setDeleteLoading(false)
       setShowDeleteConfirm(false)

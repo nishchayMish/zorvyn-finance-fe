@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/FloatingInput";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
-import api from "@/lib/api-client";
+import { resetPasswordAction } from "@/lib/actions/auth-actions";
 
 function ResetPasswordForm() {
     const router = useRouter();
@@ -46,16 +46,17 @@ function ResetPasswordForm() {
 
         try {
             setLoading(true);
-            const res = await api.post(`/users/reset-password?token=${token}`, { newPassword });
+            const res = await resetPasswordAction(token!, newPassword);
 
-            if (res.status === 200) {
+            if (res.success) {
                 toast.success("Password reset successful!");
                 setIsReset(true);
+            } else {
+                toast.error(res.message || "Reset failed.");
             }
         } catch (error: any) {
             console.error(error);
-            const message = error.response?.data?.message || "Something went wrong. Please try again.";
-            toast.error(message);
+            toast.error("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }

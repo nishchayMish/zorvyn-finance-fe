@@ -1,6 +1,10 @@
 "use client"
-
-import api from '@/lib/api-client'
+import {
+    getUsersAction,
+    updateUserRoleAction,
+    updateUserStatusAction,
+    deleteUserAction
+} from "@/lib/actions/user-actions"
 import React, { useEffect, useState } from 'react'
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -209,17 +213,20 @@ const UsersPage = () => {
     const fetchUsers = async () => {
         setLoading(true)
         try {
-            const params = new URLSearchParams({
-                page: String(page),
-                limit: String(limit),
+            const res = await getUsersAction({
+                page,
+                limit,
                 search: debouncedSearch,
                 role: roleFilter,
                 status: statusFilter,
             })
-            const res = await api.get(`/users?${params.toString()}`)
-            if (res.data.data) setUsers(res.data.data)
-            if (res.data.counts) setCounts(res.data.counts)
-            if (res.data.pagination) setPagination(res.data.pagination)
+            if (res.success) {
+                if (res.data) setUsers(res.data)
+                if (res.counts) setCounts(res.counts as any)
+                if (res.pagination) setPagination(res.pagination)
+            } else {
+                toast.error(res.message || "Failed to load users")
+            }
         } catch {
             toast.error("Failed to load users")
         } finally {
@@ -238,10 +245,13 @@ const UsersPage = () => {
     const handleRoleChange = async (userId: string, newRole: string) => {
         setUpdatingId(userId)
         try {
-            await api.put(`/users/update/role/${userId}`, { role: newRole })
-            setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole as UserRecord["role"] } : u))
-            await fetchUsers()
-            toast.success("Role updated successfully")
+            const res = await updateUserRoleAction(userId, newRole)
+            if (res.success) {
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, role: newRole as UserRecord["role"] } : u))
+                toast.success("Role updated successfully")
+            } else {
+                toast.error(res.message || "Failed to update role")
+            }
         } catch {
             toast.error("Failed to update role")
         } finally {
@@ -252,11 +262,14 @@ const UsersPage = () => {
     const handleDelete = async (userId: string) => {
         setUpdatingId(userId)
         try {
-            await api.delete(`/users/${userId}`)
-            setUsers(prev => prev.filter(u => u._id !== userId))
-            await fetchUsers();
-            toast.success("User deleted successfully")
-            setUserToDelete(null)
+            const res = await deleteUserAction(userId)
+            if (res.success) {
+                setUsers(prev => prev.filter(u => u._id !== userId))
+                toast.success("User deleted successfully")
+                setUserToDelete(null)
+            } else {
+                toast.error(res.message || "Failed to delete user")
+            }
         } catch {
             toast.error("Failed to delete user")
         } finally {
@@ -267,10 +280,13 @@ const UsersPage = () => {
     const handleStatusChange = async (userId: string, newStatus: boolean) => {
         setUpdatingId(userId)
         try {
-            await api.put(`/users/update/status/${userId}`, { isActive: newStatus })
-            setUsers(prev => prev.map(u => u._id === userId ? { ...u, isActive: newStatus } : u))
-            await fetchUsers()
-            toast.success("Status updated successfully")
+            const res = await updateUserStatusAction(userId, newStatus)
+            if (res.success) {
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, isActive: newStatus } : u))
+                toast.success("Status updated successfully")
+            } else {
+                toast.error(res.message || "Failed to update status")
+            }
         } catch {
             toast.error("Failed to update status")
         } finally {

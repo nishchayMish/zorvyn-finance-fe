@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import api from "@/lib/api-client"
 import { RecordsTable } from "@/components/records-table"
 import { AddRecordDialog } from "@/components/add-record-dialog"
 import { recordService, RecordData, SummaryData, RecordsResponse } from "@/lib/services/record-service"
@@ -180,15 +179,22 @@ export default function RecordsPage() {
                 type: typeFilter === "all" ? undefined : typeFilter,
                 category: categoryFilter === "all" ? undefined : categoryFilter,
                 search: debouncedSearch || undefined
-            })
-            setData(res)
+            }) as any;
 
-            // Extract unique categories from backend records if not already set
-            if (res.records.length > 0) {
-              const uniqueCats = Array.from(new Set(res.records.map(r => r.category))).filter(Boolean)
-              setCategories(prev => Array.from(new Set([...prev, ...uniqueCats])) as string[])
+            if (res.success) {
+                setData({
+                    records: res.records,
+                    pagination: res.pagination
+                });
+
+                // Extract unique categories from backend records if not already set
+                if (res.records.length > 0) {
+                    const uniqueCats = Array.from(new Set(res.records.map((r: any) => r.category))).filter(Boolean)
+                    setCategories(prev => Array.from(new Set([...prev, ...uniqueCats])) as string[])
+                }
+            } else {
+                toast.error(res.message || "Failed to load records");
             }
-
         } catch (error: any) {
             console.error("Records error:", error)
             toast.error("Failed to load records")

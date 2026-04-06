@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sidebar"
 import { LayoutDashboardIcon, ChartBarIcon, Settings2Icon, CommandIcon, DatabaseIcon, UsersIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import api from "@/lib/api-client"
+import { logoutAction } from "@/lib/actions/auth-actions"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = React.useState<any>({ name: "", email: "", avatar: "", role: "admin" })
@@ -35,8 +35,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const handleLogout = async () => {
     try {
-      const res = await api.post("/users/logout");
-      if (res.status === 200) {
+      const res = await logoutAction();
+      if (res.success) {
         localStorage.removeItem("user");
         router.push("/login");
       }

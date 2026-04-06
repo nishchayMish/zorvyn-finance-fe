@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/FloatingInput";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
-import api from "@/lib/api-client";
-import Cookies from "js-cookie";
+import { loginAction } from "@/lib/actions/auth-actions";
 
 function LoginForm() {
     const router = useRouter();
@@ -33,28 +32,26 @@ function LoginForm() {
             email,
             password,
         }
-        console.log("[Login] Sending payload:", payload);
+        console.log("[Login] Starting login action...");
 
         try {
             setLoading(true);
-            const res = await api.post("/users/login", payload);
-            console.log("[Login] Response received:", res.status, res.data);
+            const res = await loginAction(payload);
+            console.log("[Login] Action result:", res);
 
-            if (res.status === 200) {
-                const { accessToken, refreshToken, role, user } = res.data;
-
-                Cookies.set("accessToken", accessToken, { expires: 1 });
-                Cookies.set("refreshToken", refreshToken, { expires: 7 });
-                Cookies.set("role", role);
-                localStorage.setItem("user", JSON.stringify(user));
+            if (res.success) {
+                if (res.user) {
+                    localStorage.setItem("user", JSON.stringify(res.user));
+                }
 
                 toast.success("Welcome back!");
                 router.push("/dashboard");
+            } else {
+                toast.error(res.message || "Invalid credentials.");
             }
         } catch (error: any) {
-            console.error("[Login] XHR Error:", error);
-            const message = error.response?.data?.message || "Invalid credentials. Please try again.";
-            toast.error(message);
+            console.error("[Login] Action Error:", error);
+            toast.error("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }

@@ -1,4 +1,10 @@
-import api from "../api-client";
+import { 
+    createRecordAction, 
+    getRecordsAction, 
+    getSummaryAction, 
+    updateRecordAction, 
+    deleteRecordAction 
+} from "../actions/record-actions";
 
 export interface RecordData {
     _id?: string;
@@ -36,31 +42,28 @@ export interface RecordsResponse {
 
 export const recordService = {
     createRecord: async (data: Partial<RecordData>) => {
-        const response = await api.post("/records/create", data);
-        return response.data;
+        return await createRecordAction(data);
     },
-    getRecords: async (params?: { 
-        page?: number; 
-        limit?: number; 
-        type?: string; 
-        category?: string; 
+    getRecords: async (params?: {
+        page?: number;
+        limit?: number;
+        type?: string;
+        category?: string;
         search?: string;
         startDate?: string;
         endDate?: string;
     }) => {
-        const response = await api.get("/records/", { params });
-        return response.data as RecordsResponse;
+        return await getRecordsAction(params || {});
     },
     getSummary: async () => {
-        const response = await api.get("/records/summary");
-        return response.data.summary as SummaryData;
+        const res = await getSummaryAction();
+        return res.success ? res.summary : null;
     },
     updateRecord: async (data: Partial<RecordData>) => {
-        const response = await api.patch("/records/update", data);
-        return response.data.record as RecordData;
+        const res = await updateRecordAction(data);
+        return res.success ? res.record : null;
     },
     deleteRecord: async (id: string) => {
-        const response = await api.delete(`/records/delete/${id}`);
-        return response.data;
+        return await deleteRecordAction(id);
     }
 };
